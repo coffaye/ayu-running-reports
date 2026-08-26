@@ -19,6 +19,7 @@ Use the user's local calendar week unless another range is stated.
 - Aggregate distance, duration, number of runs, total load, and major workout types.
 - Compare with the previous week when data is available.
 - Inspect key sessions at lap level rather than treating every run equally.
+- Inspect no more than 2 representative sessions at lap level by default. Use summaries for the remaining runs.
 - Analyze intensity distribution, consistency, recovery, load progression, and one or two meaningful trends.
 - Include next week's scheduled key workouts when available.
 - The A4 PNG should summarize totals, key sessions, week-over-week changes, primary conclusion, and next-week focus.
@@ -30,5 +31,6 @@ Use the user's local calendar month unless another range is stated.
 - Aggregate distance, duration, run count, total load, and key workout categories.
 - Compare with the previous month when data is available.
 - Highlight representative workouts, meaningful bests, fitness assessment changes, consistency, load trend, and recovery pattern.
+- Inspect no more than 3 representative sessions at detail/lap level by default. Do not deep-fetch every activity merely to validate the aggregate.
 - Avoid declaring personal records unless COROS data or a direct calculation confirms them.
 - The A4 PNG should summarize totals, month-over-month changes, key progress, primary limitation, and the next training focus.

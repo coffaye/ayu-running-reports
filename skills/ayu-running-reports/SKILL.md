@@ -1,6 +1,6 @@
 ---
 name: ayu-running-reports
-description: 连接并检查 COROS MCP，使用内置的 COROS Workout Review 与 ShadowRunner 阶段—瓶颈框架，生成固定 Ayu Running 黑绿视觉的单次、每日、每周或每月跑步复盘 HTML，并内置一张代码绘制的 A4 PNG 下载。用于用户要求连接或排查 COROS、复盘跑步、判断训练完成质量/瓶颈/负荷/恢复，或生成 Ayu Running 日报、周报、月报时；无需用户重复说明格式。
+description: 连接并检查 COROS MCP，使用内置的 COROS Workout Review 与 ShadowRunner 阶段—瓶颈框架，快速生成固定 Ayu Running 黑绿视觉的单次、每日、每周或每月跑步复盘 HTML，并内置一张代码绘制的 A4 PNG 下载。用于用户要求连接或排查 COROS、复盘跑步、判断训练完成质量/瓶颈/负荷/恢复，或生成 Ayu Running 日报、周报、月报时；无需用户重复说明格式。
 ---
 
 # Ayu Running Reports
@@ -19,6 +19,16 @@ description: 连接并检查 COROS MCP，使用内置的 COROS Workout Review �
 4. **只要文字判断**：仍按证据与安全规则分析；只有用户要报告或交付物时才生成 HTML/PNG。
 
 周期报告必须读取 [references/report-modes.md](references/report-modes.md) 中对应模式。不要再次询问已经固定的版式偏好。
+
+## 默认快速生成
+
+普通日报、周报和月报以尽快交付为优先。读取足以支持主要结论的数据后立即生成报告，不把浏览器验收、截图、下载测试或视觉审查当成每次报告的必经步骤。
+
+- 复用已经稳定的 HTML、Canvas PNG 结构和视觉规范，不为每期报告重建模板。
+- 周报最多深入读取 2 次代表训练，月报最多深入读取 3 次代表训练；其余活动使用摘要聚合，除非用户明确要求逐次分析。
+- 能并行读取的独立 COROS 数据并行读取；不要为了验证同一数值反复调用工具。
+- 数据足以形成可靠主结论时停止查询。缺失的次要指标直接省略，不为填满版面扩大读取范围。
+- 报告生成完成后直接交付，不主动追加耗时的“再优化一轮”。
 
 ## COROS 连接状态
 
@@ -98,13 +108,20 @@ description: 连接并检查 COROS MCP，使用内置的 COROS Workout Review �
 
 PNG 必须由浏览器内的 HTML/JavaScript 代码直接绘制和下载，不使用图像生成模型，不调用系统打印。它是一张 A4 比例的执行摘要，不是整页网页截图，视觉与当前黑绿报告一致。
 
-## 验证门槛
+## 轻量检查与按需验证
 
-交付前必须：
+普通报告默认只做快速静态检查：
 
-1. 在真实浏览器检查桌面与移动端，无横向溢出，导航锚点和活动状态正常，控制台无错误。
-2. 点击 PNG 按钮，确认发生 `.png` 文件下载且没有系统打印对话框。
-3. 检查图片像素尺寸与 A4 比例；打开原图检查中文字体、断行、孤立标点、裁切和对比度。
-4. 核对报告没有内部 ID、位置或其他隐私泄漏；安全规则完整见 [references/upstream/privacy-safety.md](references/upstream/privacy-safety.md)。
+1. 确认 HTML 文件已写入、主要结论和周期正确。
+2. 确认存在 `下载 A4 PNG` 按钮及对应 Canvas 导出函数。
+3. 快速搜索并确认没有内部 ID、坐标、地图或其他隐私字段；安全规则见 [references/upstream/privacy-safety.md](references/upstream/privacy-safety.md)。
 
-不要在这些检查通过前宣称完成。
+完成以上检查即可交付。不要默认启动真实浏览器，不要自动点击下载，不要渲染或目检 PNG，也不要为普通报告运行桌面端/移动端全套 UI 验收。
+
+只有下列情况才执行完整浏览器与视觉验证：
+
+- HTML 模板、CSS、Canvas 布局或 PNG 导出代码本身发生变化；
+- 用户明确要求测试、验收或检查视觉效果；
+- 用户报告按钮失效、排版错误、乱码、裁切或下载异常。
+
+完整验证时再检查桌面/移动布局、控制台、PNG 下载、`2480 × 3508 px` 尺寸和原图视觉。验证范围只覆盖发生变化或报告异常的部分。
