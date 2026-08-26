@@ -1,6 +1,6 @@
 # Built-in A4 PNG export
 
-Every report HTML must include a working button labeled `下载 A4 PNG`. Do not use `window.print()`, PDF generation, screenshot APIs, or an image-generation model.
+Every report HTML must include a working button labeled `下载 PNG`. Do not use `window.print()`, PDF generation, screenshot APIs, or an image-generation model.
 
 ## Required behavior
 

@@ -25,7 +25,7 @@ Follow the DeepSeek Harness-inspired visual language without copying its content
 
 ## Required page structure
 
-1. Fixed translucent header with Ayu Running and `下载 A4 PNG`.
+1. Fixed translucent header with Ayu Running and `下载 PNG`.
 2. Hero with the dynamic training conclusion, a short session description, and one metadata row: `COROS MCP 已同步`, period/date, and primary metrics.
 3. Sticky pill navigation.
 4. Overview with score, conclusion, and open metric row.
