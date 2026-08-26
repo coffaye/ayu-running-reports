@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "coros": {
+      "type": "http",
+      "url": "https://mcp.coros.com/mcp",
+      "oauth_resource": "https://mcp.coros.com/mcp"
+    }
+  }
+}

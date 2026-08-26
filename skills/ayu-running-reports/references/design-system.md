@@ -1,0 +1,43 @@
+# Ayu Running design system
+
+Use this visual system for every daily, weekly, and monthly report.
+
+## Identity
+
+- Product name: `Ayu Running`.
+- Top fixed brand: `Ayu` in green and `Running` in white, preceded by a small green status dot.
+- The hero title is the report's dynamic conclusion, not the product name.
+- Footer right label: `Ayu Running`.
+- Primary green: `#56FFA3`.
+- Page background: `#080B09`; soft background: `#0D120F`.
+- Primary text: `#F2F6F3`; secondary text around 70% opacity; metadata around 42% opacity.
+
+## Layout language
+
+Follow the DeepSeek Harness-inspired visual language without copying its content:
+
+- Use a narrow centered content container, large vertical whitespace, oversized conclusion typography, thin low-contrast dividers, a faint 90 px grid, and subtle green radial atmosphere.
+- Organize most content as continuous full-width sections. Do not create a wall of bordered cards.
+- Reserve rounded tinted surfaces for one or two genuinely important modules such as interval evidence or the upcoming plan.
+- Do not add drop shadows to content modules.
+- Use pill shapes only for the fixed navigation and the PDF button. Completion status and `Optimized` must be plain inline text, not pills.
+- Use monospace typography for metrics and small technical labels; use a clean Chinese system sans-serif for narrative text.
+
+## Required page structure
+
+1. Fixed translucent header with Ayu Running and `下载 A4 PNG`.
+2. Hero with the dynamic training conclusion, a short session description, and one metadata row: `COROS MCP 已同步`, period/date, and primary metrics.
+3. Sticky pill navigation.
+4. Overview with score, conclusion, and open metric row.
+5. Training structure and charts.
+6. Evidence split into strengths and current concerns.
+7. Training load and recovery.
+8. Upcoming plan context when available.
+9. Minimal footer.
+
+## Interaction and responsive behavior
+
+- Navigation anchors must update their active state on scroll.
+- Desktop uses wide asymmetric grids. Under 800 px, collapse to a single column without horizontal overflow.
+- Keep charts as inline SVG so the report remains standalone.
+- Do not use external runtime dependencies for the report or PNG generation.

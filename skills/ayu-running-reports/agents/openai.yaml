@@ -1,0 +1,8 @@
+interface:
+  display_name: "Ayu Running Reports"
+  short_description: "生成固定黑绿风格的 COROS 跑步日报、周报和月报"
+  brand_color: "#56FFA3"
+  default_prompt: "使用 $ayu-running-reports 生成我最新的 COROS 跑步报告和 A4 PNG。"
+
+policy:
+  allow_implicit_invocation: true
