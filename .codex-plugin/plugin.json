@@ -1,6 +1,6 @@
 {
   "name": "ayu-running-reports",
-  "version": "1.0.0+codex.20260827015028",
+  "version": "1.0.0+codex.20260827015410",
   "description": "COROS-powered Ayu Running reports with ShadowRunner analysis and a fixed-width PNG export that grows vertically for long content.",
   "author": {
     "name": "coffaye",

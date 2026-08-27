@@ -1,4 +1,4 @@
-# Built-in A4 PNG export
+# Built-in fixed-width PNG export
 
 Every report HTML must include a working button labeled `下载 PNG`. Do not use `window.print()`, PDF generation, screenshot APIs, or an image-generation model.
 

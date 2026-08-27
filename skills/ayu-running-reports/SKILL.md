@@ -5,7 +5,7 @@ description: 连接并检查 COROS MCP，使用内置的 COROS Workout Review �
 
 # Ayu Running Reports
 
-把连接、验数、训练判断和报告交付当作一条连续工作流。先确认数据可用，再解释训练，最后生成固定视觉的 HTML 与 A4 PNG。不要把 COROS 指标换一种说法堆成数据墙。
+把连接、验数、训练判断和报告交付当作一条连续工作流。先确认数据可用，再解释训练，最后生成固定视觉的 HTML 与固定宽度 PNG。不要把 COROS 指标换一种说法堆成数据墙。
 
 本 Skill 融合了 `coros-workout-review` 与其内置的 ShadowRunner 决策框架，并叠加 Ayu Running 的周期报告、UI 和 PNG 规范。来源与许可见 [NOTICE.md](NOTICE.md)。
 

@@ -1,6 +1,6 @@
 # Ayu Running Reports
 
-一个可选择使用的 Codex 个人插件：连接 COROS MCP，以证据优先的训练复盘与 ShadowRunner 阶段—瓶颈框架，稳定生成 Ayu Running 黑绿 HTML 日报、周报或月报，并由浏览器代码直接导出一张 A4 PNG。
+一个可选择使用的 Codex 个人插件：连接 COROS MCP，以证据优先的训练复盘与 ShadowRunner 阶段—瓶颈框架，稳定生成 Ayu Running 黑绿 HTML 日报、周报或月报，并由浏览器代码直接导出固定宽度的纵向 PNG。
 
 ## 能力
 
@@ -9,7 +9,8 @@
 - 训练结构、输出质量、生理代价、负荷与恢复分析
 - ShadowRunner 阶段—瓶颈、适用域、边际收益和最小可逆下一步
 - 固定 Ayu Running 黑绿 HTML 视觉
-- `2480 × 3508 px` A4 PNG 下载，不使用生图模型、PDF 或系统打印
+- PNG 宽度固定为 `2480 px`，高度至少 `3508 px`；内容过多时只纵向增长，不压缩、不裁切
+- PNG 保持当前黑绿视觉且不带任何页脚（不绘制 `DATA · COROS MCP · 日期`、`AYU RUNNING` 或页脚分隔线）；不使用生图模型、PDF 或系统打印
 - 默认快速生成：普通报告只做轻量静态检查，不自动启动浏览器、点击下载或执行视觉验收
 
 ## 使用
@@ -23,7 +24,7 @@
 或显式调用：
 
 ```text
-使用 $ayu-running-reports 复盘我本周训练，并输出周报和 A4 PNG。
+使用 $ayu-running-reports 复盘我本周训练，并输出周报和 PNG。
 ```
 
 首次使用 COROS 时，只在 COROS 官方浏览器授权页登录。不要把密码、验证码、Cookie 或 Token 发进聊天。

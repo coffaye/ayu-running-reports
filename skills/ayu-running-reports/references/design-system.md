@@ -21,7 +21,7 @@ Follow the DeepSeek Harness-inspired visual language without copying its content
 - Organize most content as continuous full-width sections. Do not create a wall of bordered cards.
 - Reserve rounded tinted surfaces for one or two genuinely important modules such as interval evidence or the upcoming plan.
 - Do not add drop shadows to content modules.
-- Use pill shapes only for the fixed navigation and the PDF button. Completion status and `Optimized` must be plain inline text, not pills.
+- Use pill shapes only for the fixed navigation and the `下载 PNG` button. Completion status and `Optimized` must be plain inline text, not pills.
 - Use monospace typography for metrics and small technical labels; use a clean Chinese system sans-serif for narrative text.
 
 ## Required page structure
