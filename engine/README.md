@@ -36,8 +36,12 @@ in particular, missing structured workout data is represented by
 
 Phase 2.1 live verification is opt-in and local only. Set the key in the shell
 or a gitignored `.env.local`/`.env`, run `python -m ayu_report_engine.smoke
---live`, then `python -m ayu_report_engine.benchmark --live`. The latter first
-repeats the one-request smoke gate, then runs A/B/C at low and high effort,
+--live`, then `python -m ayu_report_engine.benchmark --live`. The latter reuses
+the matching successful smoke result when available (otherwise it performs the
+one-request preflight), then runs A/B/C at low and high effort,
 renders six deterministic HTML reports under `engine/.benchmark/reports/`,
 and stores only safe metadata, semantic report snapshots, validation flags and
-cost estimates. It does not save reasoning or provider raw responses.
+cost estimates. The default live output cap is 16384 tokens so high-effort
+structured cases do not truncate; it can be overridden with
+`DEEPSEEK_MAX_OUTPUT_TOKENS`. It does not save reasoning or provider raw
+responses.

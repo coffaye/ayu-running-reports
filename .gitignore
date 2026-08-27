@@ -8,3 +8,5 @@ __pycache__/
 .env
 .env.local
 engine/.benchmark/
+.playwright-cli/
+output/

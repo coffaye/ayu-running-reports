@@ -15,7 +15,7 @@ from urllib.request import Request, urlopen
 
 from .context import DailyRunContext
 from .errors import EngineError, SchemaValidationError
-from .metrics import context_for_model
+from .metrics import ALLOWED_METRIC_REFS, context_for_model, resolve_metric_ref
 from .prompt import build_instructions
 from .report import StructuredReport, report_from_model_output
 from .schema import STRUCTURED_REPORT_SCHEMA_NAME, structured_report_model_json_schema
@@ -24,7 +24,7 @@ from .version import ENGINE_VERSION
 DEFAULT_BASE_URL = "https://api.deepseek.com"
 DEFAULT_MODEL = "deepseek-v4-flash"
 DEFAULT_REASONING_EFFORT = "high"
-DEFAULT_MAX_OUTPUT_TOKENS = 8192
+DEFAULT_MAX_OUTPUT_TOKENS = 16384
 DEFAULT_TIMEOUT_SECONDS = 60.0
 MAX_RETRIES = 1
 ALLOWED_REASONING_EFFORTS = frozenset({"none", "minimal", "low", "medium", "high", "xhigh", "max"})
@@ -388,9 +388,17 @@ class DeepSeekAnalyzer:
         return self.config.base_url.rstrip("/") + "/responses"
 
     def _payload(self, context: DailyRunContext) -> dict[str, Any]:
+        available_refs = sorted(
+            ref for ref in ALLOWED_METRIC_REFS if resolve_metric_ref(context, ref) is not None
+        )
+        instructions = (
+            build_instructions()
+            + "\n当前可用 metricRef（只允许引用这些）："
+            + json.dumps(available_refs, ensure_ascii=False)
+        )
         return {
             "model": self.config.model,
-            "instructions": build_instructions(),
+            "instructions": instructions,
             "input": json.dumps(context_for_model(context), ensure_ascii=False, sort_keys=True),
             "reasoning": {"effort": self.config.reasoning_effort},
             "max_output_tokens": self.config.max_output_tokens,

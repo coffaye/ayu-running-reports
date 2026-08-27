@@ -15,6 +15,7 @@ from .adapters.running_page import load_running_page_context
 from .deepseek import DeepSeekAnalyzer, DeepSeekConfig, DeepSeekError
 from .quality import RUBRIC_MAX, score_report
 from .render import render_html
+from .version import PROMPT_VERSION
 
 # Official DeepSeek V4 Flash list prices, USD per 1M tokens. Benchmark costs
 # use cache-miss input as the conservative assumption; cache-hit input is also
@@ -128,6 +129,7 @@ def run_live_smoke(fixtures: Path, config: DeepSeekConfig) -> dict[str, Any]:
             "endpoint": analyzer.endpoint,
             "model": analyzer.config.model,
             "reasoningEffort": analyzer.config.reasoning_effort,
+            "promptVersion": PROMPT_VERSION,
             "validation": {"schema": False, "semantic": False},
         }
     metadata = result.metadata.to_dict()
@@ -136,6 +138,7 @@ def run_live_smoke(fixtures: Path, config: DeepSeekConfig) -> dict[str, Any]:
         "endpoint": analyzer.endpoint,
         "model": analyzer.config.model,
         "reasoningEffort": analyzer.config.reasoning_effort,
+        "promptVersion": PROMPT_VERSION,
         "metadata": metadata,
         "cost": _cost(metadata),
         "validation": {"schema": True, "semantic": True},
@@ -153,7 +156,21 @@ def run_live_benchmark(
         print(json.dumps({"status": "not_run", "reason": "DEEPSEEK_API_KEY is not configured"}))
         return 2
 
-    smoke = run_live_smoke(fixtures, config)
+    smoke_path = output.parent / "smoke.json"
+    smoke: dict[str, Any] | None = None
+    try:
+        candidate = json.loads(smoke_path.read_text(encoding="utf-8"))
+        if (
+            isinstance(candidate, dict)
+            and candidate.get("status") == "success"
+            and candidate.get("promptVersion") == PROMPT_VERSION
+            and candidate.get("model") == config.model
+        ):
+            smoke = candidate
+    except (OSError, json.JSONDecodeError):
+        smoke = None
+    if smoke is None:
+        smoke = run_live_smoke(fixtures, config)
     if smoke.get("status") != "success":
         payload = {
             "status": "smoke_failed",

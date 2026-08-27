@@ -2,7 +2,7 @@
 
 ENGINE_VERSION = "0.2.0"
 SCHEMA_VERSION = "1.1"
-PROMPT_VERSION = "ayu-daily-v2"
+PROMPT_VERSION = "ayu-daily-v5"
 RENDERER_VERSION = "ayu-html-canvas-v1"
 
 

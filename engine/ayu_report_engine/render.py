@@ -18,11 +18,27 @@ def _escape(value: object) -> str:
 def _display(value: object, unit: str = "") -> str:
     if value is None:
         return "不可用"
+    if isinstance(value, (list, tuple)):
+        return f"{len(value)} 条记录"
+    if isinstance(value, dict):
+        return "已提供结构化数据"
     if isinstance(value, float):
         shown = f"{value:.2f}".rstrip("0").rstrip(".")
     else:
         shown = str(value)
-    return f"{shown} {unit}".strip()
+    return f"{shown} {unit}".strip() if unit else shown
+
+
+def _evidence_display(metric_ref: str, value: object, unit: str | None) -> str:
+    """Render collection metrics without leaking dict keys or raw objects."""
+
+    if metric_ref == "planned.structuredWorkout":
+        return "已提供结构化课表"
+    if metric_ref == "summary.lapSummary":
+        return f"{len(value)} 个分圈" if isinstance(value, (list, tuple)) else "已提供分圈摘要"
+    if metric_ref == "summary.splitSummary":
+        return f"{len(value)} 个分段" if isinstance(value, (list, tuple)) else "已提供分段摘要"
+    return _display(value, unit or "")
 
 
 def _safe_model(report: StructuredReport, context: DailyRunContext) -> dict[str, Any]:
@@ -37,8 +53,13 @@ def _safe_model(report: StructuredReport, context: DailyRunContext) -> dict[str,
             {
                 "metricRef": metric.ref,
                 "label": metric_specs()[metric.ref].label,
-                "value": metric.value,
+                "value": (
+                    None
+                    if metric_specs()[metric.ref].collection
+                    else metric.value
+                ),
                 "unit": metric.unit,
+                "displayValue": _evidence_display(metric.ref, metric.value, metric.unit),
                 "source": metric.source,
                 "interpretation": item["interpretation"],
             }
@@ -100,7 +121,7 @@ def render_html(report: StructuredReport, context: DailyRunContext) -> str:
         "<li><span class=\"evidence-field\">"
         + _escape(item.get("label"))
         + "</span><span>"
-        + _escape(_display(item.get("value"), item.get("unit", "")))
+        + _escape(item.get("displayValue", _display(item.get("value"), item.get("unit", ""))))
         + "</span><span class=\"muted\">"
         + _escape(item.get("interpretation"))
         + "</span></li>"
@@ -173,11 +194,12 @@ def render_html(report: StructuredReport, context: DailyRunContext) -> str:
       if (document.fonts && document.fonts.ready) await document.fonts.ready;
       const scale = 2, logicalWidth = EXPORT_WIDTH / scale, margin = 72, contentWidth = logicalWidth - margin * 2;
       const measure = document.createElement('canvas'); const mctx = measure.getContext('2d'); mctx.font = '28px "Microsoft YaHei", "PingFang SC", sans-serif';
+      const recoveryHours = MODEL.recoveryFacts && MODEL.recoveryFacts.hours;
       const blocks = [
         ['TODAY 今日结论', MODEL.verdict],
         ['TRAINING 训练性质', MODEL.trainingPurpose || '未知'],
-        ['EVIDENCE 关键证据', (MODEL.evidence || []).map(item => item.label + ' ' + canvasText(item.value) + ' ' + canvasText(item.unit) + '：' + item.interpretation).join('；') || '暂无可用实测证据'],
-        ['LOAD 负荷与恢复', '训练负荷 ' + canvasText(MODEL.loadFacts && MODEL.loadFacts.trainingLoadPeak) + ' · 恢复 ' + canvasText(MODEL.recoveryFacts && MODEL.recoveryFacts.hours) + ' h'],
+        ['EVIDENCE 关键证据', (MODEL.evidence || []).map(item => item.label + ' ' + canvasText(item.displayValue) + '：' + item.interpretation).join('；') || '暂无可用实测证据'],
+        ['LOAD 负荷与恢复', '训练负荷 ' + canvasText(MODEL.loadFacts && MODEL.loadFacts.trainingLoadPeak) + ' · 恢复 ' + (recoveryHours === null || recoveryHours === undefined ? '不可用' : canvasText(recoveryHours) + ' h')],
         ['SHADOWRUNNER 阶段—瓶颈', MODEL.bottleneck || '未知'],
         ['NEXT 下一步', MODEL.minimalReversibleNextStep || '未知']
       ];

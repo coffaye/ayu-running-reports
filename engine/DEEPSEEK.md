@@ -13,7 +13,7 @@ Environment variables are centralized in `DeepSeekConfig.from_env()`:
 - `DEEPSEEK_MODEL` (default `deepseek-v4-flash`)
 - `DEEPSEEK_REASONING_EFFORT` (default `high`; `none`, `minimal`, `low`,
   `medium`, `high`, `xhigh`, `max`)
-- `DEEPSEEK_MAX_OUTPUT_TOKENS` (default `8192`)
+- `DEEPSEEK_MAX_OUTPUT_TOKENS` (default `16384`; high-effort structured cases previously hit the lower cap)
 - `DEEPSEEK_TIMEOUT_SECONDS` (default `60`)
 
 For local development, keep the key in the shell environment (preferred), or
@@ -41,6 +41,12 @@ complete `StructuredReport`; runtime identity and version fields are injected
 by the Engine. The output is then checked for JSON shape, local semantic
 meaning, and whitelisted `metricRef` availability before rendering.
 
+The live benchmark uses prompt version `ayu-daily-v5`: each request includes
+the metric references actually available in that context, and the local
+validator rejects raw numeric values, literal `null`, or JSON/camelCase field
+names in user-facing semantic strings. This keeps values in the deterministic
+metric display and prevents schema leakage into HTML/PNG.
+
 Only timeout/network, 429, 408 and transient 5xx responses receive at most one
 retry. `Retry-After` is honored up to eight seconds; otherwise a bounded
 exponential delay is used. 400, 401/403, malformed output, incomplete output,
@@ -64,8 +70,11 @@ python -m ayu_report_engine.benchmark --live
 ```
 
 The benchmark runs sanitized cases A (basic run), B (structured long workout)
-and C (missing metrics) at both low and high effort, after the smoke passes. It
-writes the ignored `engine/.benchmark/` directory with safe metadata, schema
+and C (missing metrics) at both low and high effort, after the smoke passes. If
+the matching successful `engine/.benchmark/smoke.json` from the explicit smoke
+command is present, it is reused so no duplicate preflight request is made;
+otherwise benchmark performs the one-request preflight itself. It writes the
+ignored `engine/.benchmark/` directory with safe metadata, schema
 and semantic validation, deterministic HTML for each result, a semantic report
 snapshot, a conservative mechanical pre-score and cache-hit/miss cost
 estimates. It never saves reasoning, authorization headers or provider raw

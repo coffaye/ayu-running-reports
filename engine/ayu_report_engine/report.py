@@ -17,6 +17,30 @@ from .schema import structured_report_json_schema
 from .version import ENGINE_VERSION, PROMPT_VERSION, RENDERER_VERSION, SCHEMA_VERSION, runtime_engine_commit
 
 _DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+_NARRATIVE_FORBIDDEN = (
+    "metricRef",
+    "summary.",
+    "plannedWorkout",
+    "structuredWorkout",
+    "workoutIntent",
+    "averageHrBpm",
+    "maxHrBpm",
+    "averagePaceSecPerKm",
+    "displayDurationSec",
+    "timerTimeSec",
+    "elapsedTimeSec",
+    "movingTimeSec",
+    "cadenceNormalizedSpm",
+    "recoveryPercent",
+    "recoveryHours",
+    "runningFitness",
+    "trainingLoadPeak",
+    "trainingEffectAerobic",
+    "trainingEffectAnaerobic",
+    "distanceM",
+    "powerW",
+    "ascentM",
+)
 
 
 def _check_text(value: object, field: str, *, nullable: bool = False) -> None:
@@ -24,6 +48,21 @@ def _check_text(value: object, field: str, *, nullable: bool = False) -> None:
         return
     if not isinstance(value, str):
         raise SchemaValidationError(f"{field} must be a string")
+
+
+def _check_narrative(value: object, field: str, *, nullable: bool = False) -> None:
+    """Keep user-facing semantic strings free of raw values and schema keys."""
+
+    _check_text(value, field, nullable=nullable)
+    if value is None and nullable:
+        return
+    assert isinstance(value, str)
+    if re.search(r"\d", value):
+        raise SchemaValidationError(f"{field} must not contain raw numeric values")
+    if "null" in value.lower():
+        raise SchemaValidationError(f"{field} must not contain the literal null")
+    if any(token in value for token in _NARRATIVE_FORBIDDEN):
+        raise SchemaValidationError(f"{field} must not contain schema field names")
 
 
 def _check_number(value: object, field: str, *, nullable: bool = True) -> None:
@@ -40,7 +79,7 @@ def _check_semantic_block(value: object, field: str) -> None:
         raise SchemaValidationError(f"{field} must be an object")
     if set(value) != {"assessment", "metricRefs"}:
         raise SchemaValidationError(f"{field} must contain assessment and metricRefs only")
-    _check_text(value.get("assessment"), f"{field}.assessment", nullable=True)
+    _check_narrative(value.get("assessment"), f"{field}.assessment", nullable=True)
     refs = value.get("metricRefs")
     if not isinstance(refs, list) or any(not isinstance(ref, str) for ref in refs):
         raise SchemaValidationError(f"{field}.metricRefs must be an array of strings")
@@ -86,14 +125,14 @@ class StructuredReport:
             datetime.strptime(self.report_date, "%Y-%m-%d")
         except ValueError as exc:
             raise SchemaValidationError("reportDate is not a real calendar date") from exc
-        _check_text(self.verdict, "verdict")
-        _check_text(self.training_purpose, "trainingPurpose", nullable=True)
+        _check_narrative(self.verdict, "verdict")
+        _check_narrative(self.training_purpose, "trainingPurpose", nullable=True)
         if not isinstance(self.completion, Mapping):
             raise SchemaValidationError("completion must be an object")
         if set(self.completion) != {"status", "trainingType", "score"}:
             raise SchemaValidationError("completion has unexpected fields")
-        _check_text(self.completion.get("status"), "completion.status", nullable=True)
-        _check_text(self.completion.get("trainingType"), "completion.trainingType", nullable=True)
+        _check_narrative(self.completion.get("status"), "completion.status", nullable=True)
+        _check_narrative(self.completion.get("trainingType"), "completion.trainingType", nullable=True)
         score = self.completion.get("score")
         _check_number(score, "completion.score")
         if score is not None and not 0 <= float(score) <= 10:
@@ -106,10 +145,10 @@ class StructuredReport:
                     f"evidence[{index}] must contain metricRef and interpretation only"
                 )
             _check_text(item.get("metricRef"), f"evidence[{index}].metricRef")
-            _check_text(item.get("interpretation"), f"evidence[{index}].interpretation")
+            _check_narrative(item.get("interpretation"), f"evidence[{index}].interpretation")
             if item.get("metricRef") not in ALLOWED_METRIC_REFS:
                 raise SchemaValidationError(f"evidence[{index}].metricRef is not allowed")
-        _check_text(self.physiology_cost, "physiologyCost", nullable=True)
+        _check_narrative(self.physiology_cost, "physiologyCost", nullable=True)
         if self.load is not None:
             _check_semantic_block(self.load, "load")
         if self.recovery is not None:
@@ -126,7 +165,7 @@ class StructuredReport:
         if set(self.shadowrunner) != required_shadow:
             raise SchemaValidationError("shadowRunner has unexpected fields")
         for name, value in self.shadowrunner.items():
-            _check_text(value, f"shadowRunner.{name}", nullable=True)
+            _check_narrative(value, f"shadowRunner.{name}", nullable=True)
         for top_name, nested_name in (
             ("bottleneck", "bottleneck"),
             ("applicable_domain", "applicableDomain"),
@@ -144,11 +183,13 @@ class StructuredReport:
             ("minimalReversibleNextStep", self.minimal_reversible_next_step),
             ("nextTrainingSuggestion", self.next_training_suggestion),
         ):
-            _check_text(value, name, nullable=True)
+            _check_narrative(value, name, nullable=True)
         if not isinstance(self.uncertainty, tuple) or any(
             not isinstance(value, str) for value in self.uncertainty
         ):
             raise SchemaValidationError("uncertainty must be a tuple of strings internally")
+        for index, value in enumerate(self.uncertainty):
+            _check_narrative(value, f"uncertainty[{index}]")
 
     def to_dict(self) -> dict[str, Any]:
         return {

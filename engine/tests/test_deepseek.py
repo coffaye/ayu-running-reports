@@ -271,6 +271,18 @@ class DeepSeekTests(unittest.TestCase):
                 DeepSeekAnalyzer(self.config(), transport=transport).analyze(context)
             self.assertEqual(raised.exception.category, "validation")
 
+    def test_narrative_cannot_leak_values_or_schema_names(self):
+        outputs = (
+            {**valid_model_output(), "verdict": "完成10公里训练"},
+            {**valid_model_output(), "uncertainty": ["recoveryHours 未提供"]},
+            {**valid_model_output(), "evidence": [{"metricRef": "summary.averageHrBpm", "interpretation": "字段为 null"}]},
+        )
+        for output in outputs:
+            transport = MockTransport([completed_response(output)])
+            with self.assertRaises(DeepSeekError) as raised:
+                DeepSeekAnalyzer(self.config(), transport=transport).analyze(fit_context())
+            self.assertEqual(raised.exception.category, "validation")
+
     def test_timeout_429_and_5xx_retry_once(self):
         for first in (
             TimeoutError("mock timeout"),

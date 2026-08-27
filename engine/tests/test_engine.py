@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import datetime, timezone
 import json
 from pathlib import Path
@@ -167,6 +168,23 @@ class EngineTests(unittest.TestCase):
         self.assertIn("<footer>Ayu Running</footer>", html)
         self.assertIn("measuredBottom", html)
         self.assertIn("canvasText", html)
+
+    def test_renderer_summarizes_collection_evidence_without_raw_objects(self) -> None:
+        raw = json.loads((FIXTURES / "fit_messages.json").read_text(encoding="utf-8"))
+        raw["session_mesgs"][0]["start_time"] = datetime(2030, 3, 4, 22, 0, tzinfo=timezone.utc)
+        context = context_from_fit_messages(raw)
+        report = FixtureAnalyzer().analyze(context)
+        report = replace(
+            report,
+            evidence=(
+                {"metricRef": "summary.lapSummary", "interpretation": "存在分圈摘要。"},
+            ),
+        )
+        html = render_html(report, context)
+        self.assertIn("1 个分圈", html)
+        self.assertNotIn("averageHrBpm", html)
+        self.assertNotIn("None", html)
+        self.assertNotIn("[object Object]", html)
 
 
 if __name__ == "__main__":
