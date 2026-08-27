@@ -1,6 +1,6 @@
 ---
 name: ayu-running-reports
-description: 连接并检查 COROS MCP，使用内置的 COROS Workout Review 与 ShadowRunner 阶段—瓶颈框架，快速生成固定 Ayu Running 黑绿视觉的单次、每日、每周或每月跑步复盘 HTML，并内置一张代码绘制的 A4 PNG 下载。用于用户要求连接或排查 COROS、复盘跑步、判断训练完成质量/瓶颈/负荷/恢复，或生成 Ayu Running 日报、周报、月报时；无需用户重复说明格式。
+description: 连接并检查 COROS MCP，使用内置的 COROS Workout Review 与 ShadowRunner 阶段—瓶颈框架，快速生成固定 Ayu Running 黑绿视觉的单次、每日、每周或每月跑步复盘 HTML，并内置一张固定宽度、内容过多时纵向增长的 A4 PNG 下载。用于用户要求连接或排查 COROS、复盘跑步、判断训练完成质量/瓶颈/负荷/恢复，或生成 Ayu Running 日报、周报、月报时；无需用户重复说明格式。
 ---
 
 # Ayu Running Reports
@@ -106,7 +106,8 @@ description: 连接并检查 COROS MCP，使用内置的 COROS Workout Review �
 
 构建或修改页面前读取 [references/design-system.md](references/design-system.md)，实现 PNG 前读取 [references/png-export.md](references/png-export.md)。HTML 的 hero 是动态训练结论；最顶部品牌始终是绿色 `Ayu` + 白色 `Running`，页脚为 `Ayu Running`。
 
-PNG 必须由浏览器内的 HTML/JavaScript 代码直接绘制和下载，不使用图像生成模型，不调用系统打印。它是一张 A4 比例的执行摘要，不是整页网页截图，视觉与当前黑绿报告一致。
+PNG 必须由浏览器内的 HTML/JavaScript 代码直接绘制和下载，不使用图像生成模型，不调用系统打印。它是一张固定宽度、至少 A4 高度的纵向执行摘要，不是整页网页截图；内容过多时只增加长度，视觉与当前黑绿报告一致。
+PNG 画布底部不保留页脚：`DATA · COROS MCP · 日期`、`AYU RUNNING`、页脚分隔线及任何其他页脚元素一律不绘制；HTML 页面页脚仍按页面规范保留。
 
 ## 轻量检查与按需验证
 

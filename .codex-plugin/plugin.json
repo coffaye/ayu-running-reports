@@ -1,7 +1,7 @@
 {
   "name": "ayu-running-reports",
-  "version": "1.0.0",
-  "description": "COROS-powered Ayu Running reports with ShadowRunner analysis and code-rendered A4 PNG export.",
+  "version": "1.0.0+codex.20260827015028",
+  "description": "COROS-powered Ayu Running reports with ShadowRunner analysis and a fixed-width PNG export that grows vertically for long content.",
   "author": {
     "name": "coffaye",
     "url": "https://github.com/coffaye"
@@ -15,7 +15,7 @@
   "interface": {
     "displayName": "Ayu Running Reports",
     "shortDescription": "COROS 跑步复盘、日报、周报与月报",
-    "longDescription": "连接 COROS MCP，以证据优先的 COROS Workout Review 和 ShadowRunner 阶段—瓶颈框架分析训练，并稳定输出 Ayu Running 黑绿 HTML 与代码绘制的一页 A4 PNG。",
+    "longDescription": "连接 COROS MCP，以证据优先的 COROS Workout Review 和 ShadowRunner 阶段—瓶颈框架分析训练，并稳定输出 Ayu Running 黑绿 HTML 与固定宽度、内容多时纵向增长的 PNG。",
     "developerName": "coffaye · Ayu Running",
     "category": "Productivity",
     "capabilities": ["Interactive", "Read", "Write"],

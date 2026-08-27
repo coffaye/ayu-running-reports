@@ -8,6 +8,7 @@ Use this visual system for every daily, weekly, and monthly report.
 - Top fixed brand: `Ayu` in green and `Running` in white, preceded by a small green status dot.
 - The hero title is the report's dynamic conclusion, not the product name.
 - Footer right label: `Ayu Running`.
+- PNG export exception: the exported PNG omits the HTML footer entirely, including the source/date line, footer divider, and `Ayu Running` footer label; keep only the report body and a clean bottom margin.
 - Primary green: `#56FFA3`.
 - Page background: `#080B09`; soft background: `#0D120F`.
 - Primary text: `#F2F6F3`; secondary text around 70% opacity; metadata around 42% opacity.
