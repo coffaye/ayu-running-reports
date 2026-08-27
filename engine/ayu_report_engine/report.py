@@ -1,4 +1,4 @@
-"""Structured semantic report and lightweight schema validation."""
+"""Structured semantic report and local validation."""
 
 from __future__ import annotations
 
@@ -9,15 +9,12 @@ import math
 import re
 from typing import Any, Mapping
 
+from .context import DailyRunContext
 from .errors import SchemaValidationError
 from .identity import normalize_run_id
-from .version import (
-    ENGINE_VERSION,
-    PROMPT_VERSION,
-    RENDERER_VERSION,
-    SCHEMA_VERSION,
-    runtime_engine_commit,
-)
+from .metrics import ALLOWED_METRIC_REFS, validate_metric_refs
+from .schema import structured_report_json_schema
+from .version import ENGINE_VERSION, PROMPT_VERSION, RENDERER_VERSION, SCHEMA_VERSION, runtime_engine_commit
 
 _DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
@@ -36,6 +33,19 @@ def _check_number(value: object, field: str, *, nullable: bool = True) -> None:
         raise SchemaValidationError(f"{field} must be numeric or null")
     if not math.isfinite(float(value)):
         raise SchemaValidationError(f"{field} must be finite")
+
+
+def _check_semantic_block(value: object, field: str) -> None:
+    if not isinstance(value, Mapping):
+        raise SchemaValidationError(f"{field} must be an object")
+    if set(value) != {"assessment", "metricRefs"}:
+        raise SchemaValidationError(f"{field} must contain assessment and metricRefs only")
+    _check_text(value.get("assessment"), f"{field}.assessment", nullable=True)
+    refs = value.get("metricRefs")
+    if not isinstance(refs, list) or any(not isinstance(ref, str) for ref in refs):
+        raise SchemaValidationError(f"{field}.metricRefs must be an array of strings")
+    if any(ref not in ALLOWED_METRIC_REFS for ref in refs):
+        raise SchemaValidationError(f"{field}.metricRefs contains an unapproved metricRef")
 
 
 @dataclass(frozen=True)
@@ -64,7 +74,13 @@ class StructuredReport:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "run_id", normalize_run_id(self.run_id))
-        if not _DATE.fullmatch(self.report_date):
+        if self.schema_version != SCHEMA_VERSION:
+            raise SchemaValidationError("unsupported StructuredReport schemaVersion")
+        _check_text(self.engine_version, "engineVersion")
+        _check_text(self.engine_commit, "engineCommit", nullable=True)
+        _check_text(self.prompt_version, "promptVersion")
+        _check_text(self.renderer_version, "rendererVersion")
+        if not isinstance(self.report_date, str) or not _DATE.fullmatch(self.report_date):
             raise SchemaValidationError("reportDate must be YYYY-MM-DD")
         try:
             datetime.strptime(self.report_date, "%Y-%m-%d")
@@ -74,12 +90,10 @@ class StructuredReport:
         _check_text(self.training_purpose, "trainingPurpose", nullable=True)
         if not isinstance(self.completion, Mapping):
             raise SchemaValidationError("completion must be an object")
+        if set(self.completion) != {"status", "trainingType", "score"}:
+            raise SchemaValidationError("completion has unexpected fields")
         _check_text(self.completion.get("status"), "completion.status", nullable=True)
-        _check_text(
-            self.completion.get("trainingType"),
-            "completion.trainingType",
-            nullable=True,
-        )
+        _check_text(self.completion.get("trainingType"), "completion.trainingType", nullable=True)
         score = self.completion.get("score")
         _check_number(score, "completion.score")
         if score is not None and not 0 <= float(score) <= 10:
@@ -87,19 +101,42 @@ class StructuredReport:
         if not isinstance(self.evidence, tuple):
             raise SchemaValidationError("evidence must be a tuple internally")
         for index, item in enumerate(self.evidence):
-            if not isinstance(item, Mapping):
-                raise SchemaValidationError(f"evidence[{index}] must be an object")
-            _check_text(item.get("field"), f"evidence[{index}].field")
-            _check_text(item.get("unit"), f"evidence[{index}].unit")
-            _check_text(item.get("source"), f"evidence[{index}].source")
-            _check_number(item.get("value"), f"evidence[{index}].value")
+            if not isinstance(item, Mapping) or set(item) != {"metricRef", "interpretation"}:
+                raise SchemaValidationError(
+                    f"evidence[{index}] must contain metricRef and interpretation only"
+                )
+            _check_text(item.get("metricRef"), f"evidence[{index}].metricRef")
+            _check_text(item.get("interpretation"), f"evidence[{index}].interpretation")
+            if item.get("metricRef") not in ALLOWED_METRIC_REFS:
+                raise SchemaValidationError(f"evidence[{index}].metricRef is not allowed")
         _check_text(self.physiology_cost, "physiologyCost", nullable=True)
-        if self.load is not None and not isinstance(self.load, Mapping):
-            raise SchemaValidationError("load must be an object or null")
-        if self.recovery is not None and not isinstance(self.recovery, Mapping):
-            raise SchemaValidationError("recovery must be an object or null")
+        if self.load is not None:
+            _check_semantic_block(self.load, "load")
+        if self.recovery is not None:
+            _check_semantic_block(self.recovery, "recovery")
         if not isinstance(self.shadowrunner, Mapping):
             raise SchemaValidationError("shadowRunner must be an object")
+        required_shadow = {
+            "stage",
+            "bottleneck",
+            "applicableDomain",
+            "marginalGain",
+            "minimalReversibleNextStep",
+        }
+        if set(self.shadowrunner) != required_shadow:
+            raise SchemaValidationError("shadowRunner has unexpected fields")
+        for name, value in self.shadowrunner.items():
+            _check_text(value, f"shadowRunner.{name}", nullable=True)
+        for top_name, nested_name in (
+            ("bottleneck", "bottleneck"),
+            ("applicable_domain", "applicableDomain"),
+            ("marginal_gain", "marginalGain"),
+            ("minimal_reversible_next_step", "minimalReversibleNextStep"),
+        ):
+            top_value = getattr(self, top_name)
+            nested_value = self.shadowrunner.get(nested_name)
+            if top_value is not None and nested_value is not None and top_value != nested_value:
+                raise SchemaValidationError(f"{top_name} conflicts with shadowRunner.{nested_name}")
         for name, value in (
             ("bottleneck", self.bottleneck),
             ("applicableDomain", self.applicable_domain),
@@ -143,38 +180,20 @@ class StructuredReport:
 
 
 def validate_structured_report(value: Mapping[str, Any]) -> None:
-    """Validate model output before it reaches a renderer."""
+    """Validate a complete engine report against the canonical schema shape."""
 
+    schema = structured_report_json_schema()
     if not isinstance(value, Mapping):
         raise SchemaValidationError("StructuredReport must be an object")
-    required = {
-        "schemaVersion",
-        "runId",
-        "reportDate",
-        "verdict",
-        "trainingPurpose",
-        "completion",
-        "evidence",
-        "physiologyCost",
-        "load",
-        "recovery",
-        "shadowRunner",
-        "bottleneck",
-        "applicableDomain",
-        "marginalGain",
-        "minimalReversibleNextStep",
-        "nextTrainingSuggestion",
-        "uncertainty",
-    }
+    if value.get("schemaVersion") != SCHEMA_VERSION:
+        raise SchemaValidationError("StructuredReport schemaVersion is unsupported")
+    required = set(schema["required"])
     missing = sorted(required - set(value))
     if missing:
         raise SchemaValidationError(f"StructuredReport missing fields: {', '.join(missing)}")
-    if not isinstance(value.get("evidence"), list):
-        raise SchemaValidationError("evidence must be an array")
-    if not isinstance(value.get("uncertainty"), list) or any(
-        not isinstance(item, str) for item in value.get("uncertainty", [])
-    ):
-        raise SchemaValidationError("uncertainty must be an array of strings")
+    unexpected = sorted(set(value) - set(schema["properties"]))
+    if unexpected:
+        raise SchemaValidationError(f"StructuredReport has unexpected fields: {', '.join(unexpected)}")
     try:
         StructuredReport(
             run_id=value["runId"],
@@ -194,10 +213,67 @@ def validate_structured_report(value: Mapping[str, Any]) -> None:
             next_training_suggestion=value["nextTrainingSuggestion"],
             uncertainty=tuple(value["uncertainty"]),
             schema_version=value["schemaVersion"],
-            engine_version=value.get("engineVersion", ENGINE_VERSION),
-            engine_commit=value.get("engineCommit"),
-            prompt_version=value.get("promptVersion", PROMPT_VERSION),
-            renderer_version=value.get("rendererVersion", RENDERER_VERSION),
+            engine_version=value["engineVersion"],
+            engine_commit=value["engineCommit"],
+            prompt_version=value["promptVersion"],
+            renderer_version=value["rendererVersion"],
         )
     except (KeyError, TypeError) as exc:
         raise SchemaValidationError("StructuredReport has invalid shape") from exc
+
+
+def validate_model_output(value: Mapping[str, Any]) -> None:
+    """Validate the model-only semantic payload before identity injection."""
+
+    schema = structured_report_json_schema(include_runtime_fields=False)
+    if not isinstance(value, Mapping):
+        raise SchemaValidationError("DeepSeek output must be an object")
+    missing = sorted(set(schema["required"]) - set(value))
+    if missing:
+        raise SchemaValidationError(f"DeepSeek output missing fields: {', '.join(missing)}")
+    unexpected = sorted(set(value) - set(schema["properties"]))
+    if unexpected:
+        raise SchemaValidationError(f"DeepSeek output has unexpected fields: {', '.join(unexpected)}")
+    StructuredReport(
+        run_id="1",
+        report_date="2000-01-01",
+        verdict=value["verdict"],
+        training_purpose=value["trainingPurpose"],
+        completion=value["completion"],
+        evidence=tuple(value["evidence"]),
+        physiology_cost=value["physiologyCost"],
+        load=value["load"],
+        recovery=value["recovery"],
+        shadowrunner=value["shadowRunner"],
+        bottleneck=value["bottleneck"],
+        applicable_domain=value["applicableDomain"],
+        marginal_gain=value["marginalGain"],
+        minimal_reversible_next_step=value["minimalReversibleNextStep"],
+        next_training_suggestion=value["nextTrainingSuggestion"],
+        uncertainty=tuple(value["uncertainty"]),
+    )
+
+
+def report_from_model_output(value: Mapping[str, Any], context: DailyRunContext) -> StructuredReport:
+    validate_model_output(value)
+    report = StructuredReport(
+        run_id=context.run_id,
+        report_date=context.local_date,
+        verdict=value["verdict"],
+        training_purpose=value["trainingPurpose"],
+        completion=value["completion"],
+        evidence=tuple(value["evidence"]),
+        physiology_cost=value["physiologyCost"],
+        load=value["load"],
+        recovery=value["recovery"],
+        shadowrunner=value["shadowRunner"],
+        bottleneck=value["bottleneck"],
+        applicable_domain=value["applicableDomain"],
+        marginal_gain=value["marginalGain"],
+        minimal_reversible_next_step=value["minimalReversibleNextStep"],
+        next_training_suggestion=value["nextTrainingSuggestion"],
+        uncertainty=tuple(value["uncertainty"]),
+    )
+    validate_metric_refs(report, context)
+    validate_structured_report(report.to_dict())
+    return report

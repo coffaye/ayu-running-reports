@@ -7,6 +7,7 @@ import json
 from typing import Any
 
 from .context import DailyRunContext
+from .metrics import metric_specs, resolve_metric_ref, validate_metric_refs
 from .report import StructuredReport, validate_structured_report
 
 
@@ -27,6 +28,21 @@ def _display(value: object, unit: str = "") -> str:
 def _safe_model(report: StructuredReport, context: DailyRunContext) -> dict[str, Any]:
     source = context.evidence[0].source_type if context.evidence else "unknown"
     completion = report.completion
+    resolved_evidence = []
+    for item in report.evidence:
+        metric = resolve_metric_ref(context, item["metricRef"])
+        if metric is None:
+            raise ValueError(f"evidence metric is unavailable: {item['metricRef']}")
+        resolved_evidence.append(
+            {
+                "metricRef": metric.ref,
+                "label": metric_specs()[metric.ref].label,
+                "value": metric.value,
+                "unit": metric.unit,
+                "source": metric.source,
+                "interpretation": item["interpretation"],
+            }
+        )
     return {
         "date": report.report_date,
         "runId": report.run_id,
@@ -36,13 +52,27 @@ def _safe_model(report: StructuredReport, context: DailyRunContext) -> dict[str,
         "trainingType": completion.get("trainingType"),
         "score": completion.get("score"),
         "distanceM": context.distance_m,
-        "durationSec": context.duration_sec,
+        "timerTimeSec": context.timer_time_sec,
+        "elapsedTimeSec": context.elapsed_time_sec,
+        "movingTimeSec": context.moving_time_sec,
+        "displayDurationSec": context.display_duration_sec,
+        "displayDurationSource": context.display_duration_source,
         "paceSecPerKm": context.average_pace_sec_per_km,
         "heartRateBpm": context.average_hr_bpm,
         "powerW": context.power_w,
         "load": report.load,
         "recovery": report.recovery,
-        "evidence": list(report.evidence),
+        "loadFacts": {
+            "trainingEffectAerobic": context.training_effect_aerobic,
+            "trainingEffectAnaerobic": context.training_effect_anaerobic,
+            "trainingLoadPeak": context.training_load_peak,
+        },
+        "recoveryFacts": {
+            "percent": context.recovery_percent,
+            "hours": context.recovery_hours,
+            "runningFitness": context.running_fitness,
+        },
+        "evidence": resolved_evidence,
         "shadowRunner": report.shadowrunner,
         "bottleneck": report.bottleneck,
         "applicableDomain": report.applicable_domain,
@@ -58,6 +88,7 @@ def render_html(report: StructuredReport, context: DailyRunContext) -> str:
     """Render one standalone report; no network or external runtime dependency."""
 
     validate_structured_report(report.to_dict())
+    validate_metric_refs(report, context)
     model = _safe_model(report, context)
     model_json = json.dumps(model, ensure_ascii=False, sort_keys=True).replace(
         "</", "<\\/"
@@ -67,11 +98,13 @@ def render_html(report: StructuredReport, context: DailyRunContext) -> str:
     score = _display(report.completion.get("score"), "/ 10")
     evidence_rows = "".join(
         "<li><span class=\"evidence-field\">"
-        + _escape(item.get("field"))
+        + _escape(item.get("label"))
         + "</span><span>"
         + _escape(_display(item.get("value"), item.get("unit", "")))
+        + "</span><span class=\"muted\">"
+        + _escape(item.get("interpretation"))
         + "</span></li>"
-        for item in report.evidence
+        for item in model["evidence"]
     ) or '<li><span class="muted">暂无可用实测证据</span></li>'
     uncertainty_rows = "".join(
         f"<li>{_escape(item)}</li>" for item in report.uncertainty
@@ -115,11 +148,11 @@ def render_html(report: StructuredReport, context: DailyRunContext) -> str:
   <div class="shell">
     <header><div class="brand"><span class="ayu">Ayu</span> <span class="running">Running</span></div><button id="download-png" class="download" type="button">下载 PNG</button></header>
     <main>
-      <div class="hero"><div class="eyebrow">{_escape(source)} · {_escape(report.report_date)}</div><h1>{_escape(report.verdict)}</h1><div class="meta">run_id {_escape(report.run_id)} · {_escape(_display(context.distance_m, "m"))} · {_escape(_display(context.duration_sec, "s"))}</div></div>
+      <div class="hero"><div class="eyebrow">{_escape(source)} · {_escape(report.report_date)}</div><h1>{_escape(report.verdict)}</h1><div class="meta">run_id {_escape(report.run_id)} · {_escape(_display(context.distance_m, "m"))} · {_escape(_display(context.display_duration_sec, "s"))} · {_escape(context.display_duration_source)}</div></div>
       <section data-png-section><h2>TODAY 今日结论</h2><p>{_escape(report.verdict)}</p><p class="status"><span class="dot"></span>{_escape(completion_status)} · {_escape(training_type)}</p></section>
       <section data-png-section><h2>TRAINING 训练性质</h2><div class="grid"><div class="metric"><div class="metric-label">训练目的</div><div class="metric-value">{_escape(report.training_purpose or "未知")}</div></div><div class="metric"><div class="metric-label">完成评分</div><div class="metric-value">{_escape(score)}</div></div><div class="metric"><div class="metric-label">训练意图</div><div class="metric-value">{_escape(training_type)}</div></div></div></section>
       <section data-png-section><h2>EVIDENCE 关键证据</h2><ul>{evidence_rows}</ul></section>
-      <section data-png-section><h2>LOAD 负荷与恢复</h2><div class="grid"><div class="metric"><div class="metric-label">训练负荷</div><div class="metric-value">{_escape(_display((report.load or {{}}).get("trainingLoadPeak")))}</div></div><div class="metric"><div class="metric-label">恢复时间</div><div class="metric-value">{_escape(_display((report.recovery or {{}}).get("hours"), "h"))}</div></div><div class="metric"><div class="metric-label">恢复比例</div><div class="metric-value">{_escape(_display((report.recovery or {{}}).get("percent"), "%"))}</div></div></div></section>
+      <section data-png-section><h2>LOAD 负荷与恢复</h2><div class="grid"><div class="metric"><div class="metric-label">训练负荷</div><div class="metric-value">{_escape(_display(context.training_load_peak))}</div></div><div class="metric"><div class="metric-label">恢复时间</div><div class="metric-value">{_escape(_display(context.recovery_hours, "h"))}</div></div><div class="metric"><div class="metric-label">恢复比例</div><div class="metric-value">{_escape(_display(context.recovery_percent, "%"))}</div></div></div><p class="muted">{_escape((report.load or {}).get("assessment") or "")}</p><p class="muted">{_escape((report.recovery or {}).get("assessment") or "")}</p></section>
       <section data-png-section><h2>SHADOWRUNNER 阶段—瓶颈</h2><p>{_escape(report.bottleneck or "未知")}</p><p class="muted">适用域：{_escape(report.applicable_domain or "未知")} · 边际收益：{_escape(report.marginal_gain or "未知")}</p></section>
       <section data-png-section><h2>NEXT 下一步</h2><p>{_escape(report.minimal_reversible_next_step or "未知")}</p><p>{_escape(report.next_training_suggestion or "未知")}</p><ul>{uncertainty_rows}</ul></section>
     </main>
@@ -143,8 +176,8 @@ def render_html(report: StructuredReport, context: DailyRunContext) -> str:
       const blocks = [
         ['TODAY 今日结论', MODEL.verdict],
         ['TRAINING 训练性质', MODEL.trainingPurpose || '未知'],
-        ['EVIDENCE 关键证据', (MODEL.evidence || []).map(item => item.field + ' ' + canvasText(item.value) + ' ' + item.unit).join('；') || '暂无可用实测证据'],
-        ['LOAD 负荷与恢复', '训练负荷 ' + canvasText((MODEL.load || {{}}).trainingLoadPeak) + ' · 恢复 ' + canvasText((MODEL.recovery || {{}}).hours) + ' h'],
+        ['EVIDENCE 关键证据', (MODEL.evidence || []).map(item => item.label + ' ' + canvasText(item.value) + ' ' + canvasText(item.unit) + '：' + item.interpretation).join('；') || '暂无可用实测证据'],
+        ['LOAD 负荷与恢复', '训练负荷 ' + canvasText(MODEL.loadFacts && MODEL.loadFacts.trainingLoadPeak) + ' · 恢复 ' + canvasText(MODEL.recoveryFacts && MODEL.recoveryFacts.hours) + ' h'],
         ['SHADOWRUNNER 阶段—瓶颈', MODEL.bottleneck || '未知'],
         ['NEXT 下一步', MODEL.minimalReversibleNextStep || '未知']
       ];

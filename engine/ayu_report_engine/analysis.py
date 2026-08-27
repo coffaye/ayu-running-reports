@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Protocol
 
 from .context import DailyRunContext
+from .metrics import validate_metric_refs
 from .report import StructuredReport
 
 
@@ -28,24 +29,19 @@ class FixtureAnalyzer:
             else "基础跑步数据已规范化，但训练意图未知"
         )
         evidence = []
-        for field_name, value, unit in (
-            ("distanceM", context.distance_m, "m"),
-            ("durationSec", context.duration_sec, "s"),
-            ("averageSpeedMps", context.average_speed_mps, "m/s"),
-            ("averageHrBpm", context.average_hr_bpm, "bpm"),
-            ("powerW", context.power_w, "W"),
-            ("ascentM", context.ascent_m, "m"),
+        for metric_ref, value in (
+            ("summary.distanceM", context.distance_m),
+            ("summary.displayDurationSec", context.display_duration_sec),
+            ("summary.averagePaceSecPerKm", context.average_pace_sec_per_km),
+            ("summary.averageHrBpm", context.average_hr_bpm),
+            ("summary.powerW", context.power_w),
+            ("summary.ascentM", context.ascent_m),
         ):
             if value is not None:
                 evidence.append(
                     {
-                        "field": field_name,
-                        "value": value,
-                        "unit": unit,
-                        "source": context.evidence[0].source_type
-                        if context.evidence
-                        else "unknown",
-                        "interpretation": None,
+                        "metricRef": metric_ref,
+                        "interpretation": "确定性引擎提供的实测事实，待分析层解释。",
                     }
                 )
         missing = [
@@ -58,7 +54,7 @@ class FixtureAnalyzer:
             )
             if value is None
         ]
-        return StructuredReport(
+        report = StructuredReport(
             run_id=context.run_id,
             report_date=context.local_date,
             verdict=verdict,
@@ -71,14 +67,28 @@ class FixtureAnalyzer:
             evidence=tuple(evidence),
             physiology_cost=None,
             load={
-                "trainingEffectAerobic": context.training_effect_aerobic,
-                "trainingEffectAnaerobic": context.training_effect_anaerobic,
-                "trainingLoadPeak": context.training_load_peak,
+                "assessment": None,
+                "metricRefs": [
+                    ref
+                    for ref, value in (
+                        ("summary.trainingEffectAerobic", context.training_effect_aerobic),
+                        ("summary.trainingEffectAnaerobic", context.training_effect_anaerobic),
+                        ("summary.trainingLoadPeak", context.training_load_peak),
+                    )
+                    if value is not None
+                ],
             },
             recovery={
-                "percent": context.recovery_percent,
-                "hours": context.recovery_hours,
-                "runningFitness": context.running_fitness,
+                "assessment": None,
+                "metricRefs": [
+                    ref
+                    for ref, value in (
+                        ("summary.recoveryPercent", context.recovery_percent),
+                        ("summary.recoveryHours", context.recovery_hours),
+                        ("summary.runningFitness", context.running_fitness),
+                    )
+                    if value is not None
+                ],
             },
             shadowrunner={
                 "stage": None,
@@ -94,3 +104,5 @@ class FixtureAnalyzer:
             next_training_suggestion=None,
             uncertainty=tuple(f"{item} unavailable" for item in missing),
         )
+        validate_metric_refs(report, context)
+        return report

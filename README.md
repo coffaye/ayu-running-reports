@@ -13,15 +13,28 @@
 - PNG 保持当前黑绿视觉且不带任何页脚（不绘制 `DATA · COROS MCP · 日期`、`AYU RUNNING` 或页脚分隔线）；不使用生图模型、PDF 或系统打印
 - 默认快速生成：普通报告只做轻量静态检查，不自动启动浏览器、点击下载或执行视觉验收
 
-## 共享 Report Engine（Phase 1）
+## 共享 Report Engine（Phase 1.1 + Phase 2）
 
 `engine/` 提供 Codex Skill、CLI 和未来 GitHub Actions 共用的离线核心：
 `DailyRunContext`、running_page/SQLite/FIT adapters、`StructuredReport` schema、
-无网络 FixtureAnalyzer，以及确定性的 Ayu HTML/Canvas PNG renderer。本阶段不调用
-DeepSeek，不读取实时 COROS，也不修改 `running_page`。
+无网络 FixtureAnalyzer、显式 DeepSeek Responses API Analyzer，以及确定性的
+Ayu HTML/Canvas PNG renderer。v1.1 已区分 timer/elapsed/moving time，并将 FIT
+原始 cadence 保留为带单位 provenance 的值；未经核实的 raw cadence 不会进入模型判断。
+普通导入、测试和 fixture CLI 不调用 DeepSeek；只有显式选择 `--analyzer deepseek`
+且提供 `DEEPSEEK_API_KEY` 时才会联网，也不读取实时 COROS 或修改 `running_page`。
 
 未来 Action 必须将 Engine 固定到 semantic tag 或 commit SHA，并注入
 `AYU_ENGINE_COMMIT`；不得无版本地跟随 `main`。原始 FIT、路线和账号信息不进入本仓库。
+
+显式本地 DeepSeek 示例（不会把 key 写入命令行）：
+
+```text
+$env:DEEPSEEK_API_KEY = "..."
+python -m ayu_report_engine --run-id 1900000000000 --json tests/fixtures/activities.json --output report.html --analyzer deepseek
+```
+
+真实 low/high 对比使用 `python -m ayu_report_engine.benchmark --live`，仅在用户明确
+执行且配置 key 后运行；benchmark 不保存 reasoning，只写安全 metadata 和待人工评分的 rubric。
 
 ## 使用
 

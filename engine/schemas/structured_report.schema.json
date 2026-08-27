@@ -1,45 +1,321 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://ayu-running.example/schemas/structured-report-1.0.json",
+  "$id": "https://ayu-running.example/schemas/structured-report-1.1.json",
   "title": "Ayu StructuredReport",
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "schemaVersion", "runId", "reportDate", "verdict", "trainingPurpose",
-    "completion", "evidence", "physiologyCost", "load", "recovery",
-    "shadowRunner", "bottleneck", "applicableDomain", "marginalGain",
-    "minimalReversibleNextStep", "nextTrainingSuggestion", "uncertainty"
+    "schemaVersion",
+    "engineVersion",
+    "engineCommit",
+    "promptVersion",
+    "rendererVersion",
+    "runId",
+    "reportDate",
+    "verdict",
+    "trainingPurpose",
+    "completion",
+    "evidence",
+    "physiologyCost",
+    "load",
+    "recovery",
+    "shadowRunner",
+    "bottleneck",
+    "applicableDomain",
+    "marginalGain",
+    "minimalReversibleNextStep",
+    "nextTrainingSuggestion",
+    "uncertainty"
   ],
   "properties": {
-    "schemaVersion": {"type": "string", "const": "1.0"},
-    "engineVersion": {"type": "string"},
-    "engineCommit": {"type": ["string", "null"]},
-    "promptVersion": {"type": "string"},
-    "rendererVersion": {"type": "string"},
-    "runId": {"type": "string", "pattern": "^[1-9][0-9]*$"},
-    "reportDate": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"},
-    "verdict": {"type": "string", "minLength": 1},
-    "trainingPurpose": {"type": ["string", "null"]},
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.1"
+    },
+    "engineVersion": {
+      "type": "string"
+    },
+    "engineCommit": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "promptVersion": {
+      "type": "string"
+    },
+    "rendererVersion": {
+      "type": "string"
+    },
+    "runId": {
+      "type": "string",
+      "pattern": "^[1-9][0-9]*$"
+    },
+    "reportDate": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "verdict": {
+      "type": "string",
+      "minLength": 1
+    },
+    "trainingPurpose": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
     "completion": {
       "type": "object",
-      "required": ["status", "trainingType", "score"],
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "trainingType",
+        "score"
+      ],
       "properties": {
-        "status": {"type": ["string", "null"]},
-        "trainingType": {"type": ["string", "null"]},
-        "score": {"type": ["number", "null"], "minimum": 0, "maximum": 10}
-      },
-      "additionalProperties": true
+        "status": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "trainingType": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "score": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 10
+        }
+      }
     },
-    "evidence": {"type": "array", "items": {"type": "object"}},
-    "physiologyCost": {"type": ["string", "null"]},
-    "load": {"type": ["object", "null"]},
-    "recovery": {"type": ["object", "null"]},
-    "shadowRunner": {"type": "object"},
-    "bottleneck": {"type": ["string", "null"]},
-    "applicableDomain": {"type": ["string", "null"]},
-    "marginalGain": {"type": ["string", "null"]},
-    "minimalReversibleNextStep": {"type": ["string", "null"]},
-    "nextTrainingSuggestion": {"type": ["string", "null"]},
-    "uncertainty": {"type": "array", "items": {"type": "string"}}
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "metricRef",
+          "interpretation"
+        ],
+        "properties": {
+          "metricRef": {
+            "type": "string",
+            "enum": [
+              "planned.structuredWorkout",
+              "summary.ascentM",
+              "summary.averageHrBpm",
+              "summary.averagePaceSecPerKm",
+              "summary.cadenceNormalizedSpm",
+              "summary.displayDurationSec",
+              "summary.distanceM",
+              "summary.elapsedTimeSec",
+              "summary.lapSummary",
+              "summary.maxHrBpm",
+              "summary.movingTimeSec",
+              "summary.powerW",
+              "summary.recoveryHours",
+              "summary.recoveryPercent",
+              "summary.runningFitness",
+              "summary.splitSummary",
+              "summary.timerTimeSec",
+              "summary.trainingEffectAerobic",
+              "summary.trainingEffectAnaerobic",
+              "summary.trainingLoadPeak"
+            ]
+          },
+          "interpretation": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "physiologyCost": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "load": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": false,
+      "required": [
+        "assessment",
+        "metricRefs"
+      ],
+      "properties": {
+        "assessment": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "metricRefs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "planned.structuredWorkout",
+              "summary.ascentM",
+              "summary.averageHrBpm",
+              "summary.averagePaceSecPerKm",
+              "summary.cadenceNormalizedSpm",
+              "summary.displayDurationSec",
+              "summary.distanceM",
+              "summary.elapsedTimeSec",
+              "summary.lapSummary",
+              "summary.maxHrBpm",
+              "summary.movingTimeSec",
+              "summary.powerW",
+              "summary.recoveryHours",
+              "summary.recoveryPercent",
+              "summary.runningFitness",
+              "summary.splitSummary",
+              "summary.timerTimeSec",
+              "summary.trainingEffectAerobic",
+              "summary.trainingEffectAnaerobic",
+              "summary.trainingLoadPeak"
+            ]
+          }
+        }
+      }
+    },
+    "recovery": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": false,
+      "required": [
+        "assessment",
+        "metricRefs"
+      ],
+      "properties": {
+        "assessment": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "metricRefs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "planned.structuredWorkout",
+              "summary.ascentM",
+              "summary.averageHrBpm",
+              "summary.averagePaceSecPerKm",
+              "summary.cadenceNormalizedSpm",
+              "summary.displayDurationSec",
+              "summary.distanceM",
+              "summary.elapsedTimeSec",
+              "summary.lapSummary",
+              "summary.maxHrBpm",
+              "summary.movingTimeSec",
+              "summary.powerW",
+              "summary.recoveryHours",
+              "summary.recoveryPercent",
+              "summary.runningFitness",
+              "summary.splitSummary",
+              "summary.timerTimeSec",
+              "summary.trainingEffectAerobic",
+              "summary.trainingEffectAnaerobic",
+              "summary.trainingLoadPeak"
+            ]
+          }
+        }
+      }
+    },
+    "shadowRunner": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stage",
+        "bottleneck",
+        "applicableDomain",
+        "marginalGain",
+        "minimalReversibleNextStep"
+      ],
+      "properties": {
+        "stage": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "bottleneck": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "applicableDomain": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "marginalGain": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "minimalReversibleNextStep": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "bottleneck": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "applicableDomain": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "marginalGain": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "minimalReversibleNextStep": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "nextTrainingSuggestion": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "uncertainty": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
   }
 }

@@ -100,15 +100,22 @@ class DailyRunContext:
     timezone_source: str
     sport: str
     distance_m: float
-    duration_sec: float
+    timer_time_sec: float | None = None
+    elapsed_time_sec: float | None = None
+    moving_time_sec: float | None = None
+    display_duration_source: str = "unknown"
     subtype: str | None = None
     title: str | None = None
-    elapsed_time_sec: float | None = None
     average_speed_mps: float | None = None
     average_pace_sec_per_km: float | None = None
     average_hr_bpm: float | None = None
     max_hr_bpm: float | None = None
-    cadence_spm: float | None = None
+    cadence_raw_value: float | None = None
+    cadence_raw_unit: str | None = None
+    cadence_raw_field: str | None = None
+    cadence_raw_message: str | None = None
+    cadence_raw_origin: str | None = None
+    cadence_normalized_spm: float | None = None
     stride_m: float | None = None
     power_w: float | None = None
     ascent_m: float | None = None
@@ -131,6 +138,13 @@ class DailyRunContext:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "run_id", normalize_run_id(self.run_id))
+        if self.schema_version != SCHEMA_VERSION:
+            raise SchemaValidationError("unsupported DailyRunContext schemaVersion")
+        for name in ("engine_version", "prompt_version", "renderer_version"):
+            if not isinstance(getattr(self, name), str) or not getattr(self, name):
+                raise SchemaValidationError(f"{name} must be a non-empty string")
+        if self.engine_commit is not None and not isinstance(self.engine_commit, str):
+            raise SchemaValidationError("engineCommit must be a string or null")
         if self.timezone_source not in {"source", "config", "derived", "unknown"}:
             raise SchemaValidationError("timezoneSource must be source/config/derived/unknown")
         if not self.sport or not isinstance(self.sport, str):
@@ -142,25 +156,30 @@ class DailyRunContext:
             or self.distance_m < 0
         ):
             raise SchemaValidationError("distanceM must be a finite non-negative number")
-        if (
-            isinstance(self.duration_sec, bool)
-            or not isinstance(self.duration_sec, (int, float))
-            or not math.isfinite(float(self.duration_sec))
-            or self.duration_sec < 0
-        ):
-            raise SchemaValidationError("durationSec must be a finite non-negative number")
         if not isinstance(self.local_date, str):
             raise SchemaValidationError("localDate must be YYYY-MM-DD")
         _date_from_source(self.local_date)
         if self.local_date != self.local_date[:10]:
             raise SchemaValidationError("localDate must be YYYY-MM-DD")
+        if self.display_duration_source not in {
+            "moving_time",
+            "timer_time",
+            "elapsed_time",
+            "unknown",
+        }:
+            raise SchemaValidationError(
+                "displayDurationSource must be moving_time/timer_time/elapsed_time/unknown"
+            )
         for name in (
+            "timer_time_sec",
             "elapsed_time_sec",
+            "moving_time_sec",
             "average_speed_mps",
             "average_pace_sec_per_km",
             "average_hr_bpm",
             "max_hr_bpm",
-            "cadence_spm",
+            "cadence_raw_value",
+            "cadence_normalized_spm",
             "stride_m",
             "power_w",
             "ascent_m",
@@ -172,20 +191,55 @@ class DailyRunContext:
             "running_fitness",
         ):
             _finite_or_none(getattr(self, name))
+        duration_values = {
+            "moving_time": self.moving_time_sec,
+            "timer_time": self.timer_time_sec,
+            "elapsed_time": self.elapsed_time_sec,
+        }
+        if not any(value is not None for value in duration_values.values()):
+            raise SchemaValidationError("at least one duration field is required")
+        if self.display_duration_source == "unknown":
+            for source_name in ("moving_time", "timer_time", "elapsed_time"):
+                if duration_values[source_name] is not None:
+                    object.__setattr__(self, "display_duration_source", source_name)
+                    break
+        if self.display_duration_source != "unknown":
+            if duration_values[self.display_duration_source] is None:
+                raise SchemaValidationError(
+                    "displayDurationSource must point to an available duration"
+                )
+        if self.cadence_raw_value is not None:
+            for name in ("cadence_raw_unit", "cadence_raw_field", "cadence_raw_message"):
+                if not isinstance(getattr(self, name), str) or not getattr(self, name):
+                    raise SchemaValidationError(f"{name} is required with raw cadence")
+            if self.cadence_raw_origin not in {"native", "developer", "unknown"}:
+                raise SchemaValidationError("cadenceRawOrigin must be native/developer/unknown")
+        if self.cadence_normalized_spm is not None and self.cadence_raw_value is None:
+            raise SchemaValidationError("normalized cadence requires raw cadence provenance")
         if self.structured_workout is None and self.workout_intent != "unknown":
             raise SchemaValidationError("missing structured workout requires workoutIntent=unknown")
+
+    @property
+    def display_duration_sec(self) -> float | None:
+        return {
+            "moving_time": self.moving_time_sec,
+            "timer_time": self.timer_time_sec,
+            "elapsed_time": self.elapsed_time_sec,
+        }.get(self.display_duration_source)
 
     @property
     def available_metrics(self) -> tuple[str, ...]:
         fields = []
         for field_name in (
             "distance_m",
-            "duration_sec",
+            "timer_time_sec",
+            "elapsed_time_sec",
+            "moving_time_sec",
             "average_speed_mps",
             "average_pace_sec_per_km",
             "average_hr_bpm",
             "max_hr_bpm",
-            "cadence_spm",
+            "cadence_normalized_spm",
             "stride_m",
             "power_w",
             "ascent_m",
@@ -212,14 +266,21 @@ class DailyRunContext:
         data["startDatetimeLocal"] = data.pop("start_datetime_local")
         data["timezoneSource"] = data.pop("timezone_source")
         data["distanceM"] = data.pop("distance_m")
-        data["durationSec"] = data.pop("duration_sec")
-        data["subtype"] = data.get("subtype")
+        data["timerTimeSec"] = data.pop("timer_time_sec")
         data["elapsedTimeSec"] = data.pop("elapsed_time_sec")
+        data["movingTimeSec"] = data.pop("moving_time_sec")
+        data["displayDurationSource"] = data.pop("display_duration_source")
+        data["subtype"] = data.get("subtype")
         data["averageSpeedMps"] = data.pop("average_speed_mps")
         data["averagePaceSecPerKm"] = data.pop("average_pace_sec_per_km")
         data["averageHrBpm"] = data.pop("average_hr_bpm")
         data["maxHrBpm"] = data.pop("max_hr_bpm")
-        data["cadenceSpm"] = data.pop("cadence_spm")
+        data["cadenceRawValue"] = data.pop("cadence_raw_value")
+        data["cadenceRawUnit"] = data.pop("cadence_raw_unit")
+        data["cadenceRawField"] = data.pop("cadence_raw_field")
+        data["cadenceRawMessage"] = data.pop("cadence_raw_message")
+        data["cadenceRawOrigin"] = data.pop("cadence_raw_origin")
+        data["cadenceNormalizedSpm"] = data.pop("cadence_normalized_spm")
         data["strideM"] = data.pop("stride_m")
         data["powerW"] = data.pop("power_w")
         data["ascentM"] = data.pop("ascent_m")

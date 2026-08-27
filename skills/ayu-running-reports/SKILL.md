@@ -9,6 +9,12 @@ description: 连接并检查 COROS MCP，使用内置的 COROS Workout Review �
 
 本 Skill 融合了 `coros-workout-review` 与其内置的 ShadowRunner 决策框架，并叠加 Ayu Running 的周期报告、UI 和 PNG 规范。来源与许可见 [NOTICE.md](NOTICE.md)。
 
+共享 Engine 位于仓库 `engine/`，当前 Schema v1.1。它区分 timer、elapsed、moving
+time，并保留 FIT cadence 的 raw value/unit/provenance；除非已有独立证据证明换算关系，
+`cadenceNormalizedSpm` 保持未知，raw cadence 不用于模型判断。Engine 同时提供
+`FixtureAnalyzer` 与显式 `DeepSeekAnalyzer`：只有用户明确选择 `--analyzer deepseek`
+并配置 `DEEPSEEK_API_KEY` 时才允许网络调用；默认导入、测试和 fixture 报告均不联网。
+
 ## 共享 Report Engine
 
 仓库根目录的 `engine/` 是 Skill、CLI 与未来 GitHub Actions 共用的离线核心。它定义

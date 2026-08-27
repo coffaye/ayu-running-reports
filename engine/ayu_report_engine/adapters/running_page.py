@@ -56,8 +56,7 @@ def _build_context(
         raise DataSourceError("distance is required")
     moving_time = parse_duration_seconds(row.get("moving_time"))
     elapsed_time = parse_duration_seconds(row.get("elapsed_time"))
-    duration_sec = moving_time if moving_time is not None else elapsed_time
-    if duration_sec is None:
+    if moving_time is None and elapsed_time is None:
         raise DataSourceError("moving_time or elapsed_time is required")
 
     average_speed = _optional_number(row, "average_speed")
@@ -65,23 +64,24 @@ def _build_context(
     if average_speed is not None and average_speed > 0:
         average_pace = 1000 / average_speed
 
-    supplied = (
-        "runId",
-        "localDate",
-        "startDatetimeLocal",
-        "sport",
-        "distanceM",
-        "durationSec",
-        "averageSpeedMps",
-        "averageHrBpm",
-        "ascentM",
-    )
     evidence = SourceEvidence(
         source_type=source_type,
         source_ref=source_ref,
         adapter_version=ADAPTER_VERSION,
         captured_at=None,
-        fields=supplied,
+        fields=(
+            "runId",
+            "localDate",
+            "startDatetimeLocal",
+            "sport",
+            "distanceM",
+            "movingTimeSec",
+            "elapsedTimeSec",
+            "displayDurationSource",
+            "averageSpeedMps",
+            "averageHrBpm",
+            "ascentM",
+        ),
     )
     return DailyRunContext(
         run_id=run_id,
@@ -93,8 +93,10 @@ def _build_context(
         subtype=row.get("subtype") if isinstance(row.get("subtype"), str) else None,
         title=row.get("name") if isinstance(row.get("name"), str) and row.get("name") else None,
         distance_m=distance_m,
-        duration_sec=duration_sec,
+        timer_time_sec=None,
         elapsed_time_sec=elapsed_time,
+        moving_time_sec=moving_time,
+        display_duration_source="moving_time" if moving_time is not None else "elapsed_time",
         average_speed_mps=average_speed,
         average_pace_sec_per_km=average_pace,
         average_hr_bpm=_optional_number(row, "average_heartrate"),

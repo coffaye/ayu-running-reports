@@ -62,7 +62,8 @@ class EngineTests(unittest.TestCase):
             malformed = Path(directory) / "activities.json"
             malformed.write_text("{bad", encoding="utf-8")
             context = load_running_page_context(malformed, db_path, 1900000000000)
-            self.assertEqual(context.duration_sec, 1800)
+            self.assertEqual(context.moving_time_sec, 1800)
+            self.assertEqual(context.display_duration_source, "moving_time")
             self.assertEqual(context.ascent_m, 0.0)
 
     def test_json_sqlite_mismatch_is_not_silently_merged(self) -> None:
@@ -91,6 +92,15 @@ class EngineTests(unittest.TestCase):
         self.assertEqual(context.timezone, "UTC")
         self.assertEqual(context.timezone_source, "source")
         self.assertEqual(context.power_w, 240.0)
+        self.assertEqual(context.timer_time_sec, 3595.0)
+        self.assertEqual(context.elapsed_time_sec, 3600.0)
+        self.assertEqual(context.display_duration_source, "timer_time")
+        self.assertEqual(context.cadence_raw_value, 88.0)
+        self.assertEqual(context.cadence_raw_unit, "strides/min")
+        self.assertIsNone(context.cadence_normalized_spm)
+        context_json = context.to_dict()
+        self.assertNotIn("durationSec", context_json)
+        self.assertNotIn("cadenceSpm", context_json)
         self.assertEqual(context.ascent_m, 0.0)
         self.assertEqual(context.structured_workout["name"], "匿名结构化课表")
         self.assertEqual(context.workout_intent, "structured")

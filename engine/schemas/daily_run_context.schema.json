@@ -1,49 +1,282 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://ayu-running.example/schemas/daily-run-context-1.0.json",
+  "$id": "https://ayu-running.example/schemas/daily-run-context-1.1.json",
   "title": "Ayu DailyRunContext",
   "type": "object",
   "additionalProperties": true,
   "required": [
-    "schemaVersion", "runId", "localDate", "startDatetimeLocal", "timezone",
-    "timezoneSource", "sport", "distanceM", "durationSec", "structuredWorkout",
-    "workoutIntent", "evidence"
+    "schemaVersion",
+    "runId",
+    "localDate",
+    "startDatetimeLocal",
+    "timezone",
+    "timezoneSource",
+    "sport",
+    "distanceM",
+    "displayDurationSource",
+    "structuredWorkout",
+    "workoutIntent",
+    "evidence"
   ],
   "properties": {
-    "schemaVersion": {"type": "string", "const": "1.0"},
-    "engineVersion": {"type": "string"},
-    "engineCommit": {"type": ["string", "null"]},
-    "promptVersion": {"type": "string"},
-    "rendererVersion": {"type": "string"},
-    "runId": {"type": "string", "pattern": "^[1-9][0-9]*$"},
-    "localDate": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"},
-    "startDatetimeLocal": {"type": "string", "minLength": 10},
-    "timezone": {"type": ["string", "null"]},
-    "timezoneSource": {"enum": ["source", "config", "derived", "unknown"]},
-    "sport": {"type": "string", "minLength": 1},
-    "subtype": {"type": ["string", "null"]},
-    "title": {"type": ["string", "null"]},
-    "distanceM": {"type": "number", "minimum": 0},
-    "durationSec": {"type": "number", "minimum": 0},
-    "elapsedTimeSec": {"type": ["number", "null"], "minimum": 0},
-    "averageSpeedMps": {"type": ["number", "null"], "minimum": 0},
-    "averagePaceSecPerKm": {"type": ["number", "null"], "minimum": 0},
-    "averageHrBpm": {"type": ["number", "null"], "minimum": 0},
-    "maxHrBpm": {"type": ["number", "null"], "minimum": 0},
-    "cadenceSpm": {"type": ["number", "null"], "minimum": 0},
-    "strideM": {"type": ["number", "null"], "minimum": 0},
-    "powerW": {"type": ["number", "null"], "minimum": 0},
-    "ascentM": {"type": ["number", "null"], "minimum": 0},
-    "laps": {"type": ["array", "null"]},
-    "splits": {"type": ["array", "null"]},
-    "structuredWorkout": {"type": ["object", "null"]},
-    "workoutIntent": {"type": "string", "enum": ["structured", "unknown"]},
-    "trainingEffectAerobic": {"type": ["number", "null"], "minimum": 0},
-    "trainingEffectAnaerobic": {"type": ["number", "null"], "minimum": 0},
-    "trainingLoadPeak": {"type": ["number", "null"], "minimum": 0},
-    "recoveryPercent": {"type": ["number", "null"], "minimum": 0},
-    "recoveryHours": {"type": ["number", "null"], "minimum": 0},
-    "runningFitness": {"type": ["number", "null"]},
-    "evidence": {"type": "array", "items": {"type": "object"}}
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.1"
+    },
+    "engineVersion": {
+      "type": "string"
+    },
+    "engineCommit": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "promptVersion": {
+      "type": "string"
+    },
+    "rendererVersion": {
+      "type": "string"
+    },
+    "runId": {
+      "type": "string",
+      "pattern": "^[1-9][0-9]*$"
+    },
+    "localDate": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "startDatetimeLocal": {
+      "type": "string",
+      "minLength": 10
+    },
+    "timezone": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "timezoneSource": {
+      "enum": [
+        "source",
+        "config",
+        "derived",
+        "unknown"
+      ]
+    },
+    "sport": {
+      "type": "string",
+      "minLength": 1
+    },
+    "subtype": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "title": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "distanceM": {
+      "type": "number",
+      "minimum": 0
+    },
+    "timerTimeSec": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "elapsedTimeSec": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "movingTimeSec": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "displayDurationSource": {
+      "enum": [
+        "moving_time",
+        "timer_time",
+        "elapsed_time",
+        "unknown"
+      ]
+    },
+    "averageSpeedMps": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "averagePaceSecPerKm": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "averageHrBpm": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "maxHrBpm": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "cadenceRawValue": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "cadenceRawUnit": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "cadenceRawField": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "cadenceRawMessage": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "cadenceRawOrigin": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "native",
+        "developer",
+        "unknown",
+        null
+      ]
+    },
+    "cadenceNormalizedSpm": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "strideM": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "powerW": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "ascentM": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "laps": {
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "splits": {
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "structuredWorkout": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "workoutIntent": {
+      "type": "string",
+      "enum": [
+        "structured",
+        "unknown"
+      ]
+    },
+    "trainingEffectAerobic": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "trainingEffectAnaerobic": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "trainingLoadPeak": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "recoveryPercent": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "recoveryHours": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "runningFitness": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    }
   }
 }

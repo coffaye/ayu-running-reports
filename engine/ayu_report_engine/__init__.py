@@ -8,17 +8,42 @@ without changing the renderer or the Codex Skill contract.
 
 from .analysis import FixtureAnalyzer, ReportAnalyzer
 from .context import DailyRunContext, SourceEvidence
+from .deepseek import (
+    AnalysisResult,
+    AnalyzerMetadata,
+    DeepSeekAnalyzer,
+    DeepSeekConfig,
+    DeepSeekError,
+    MissingAPIKeyError,
+)
 from .errors import (
     DataMismatchError,
     DataSourceError,
     IdentityError,
     SchemaValidationError,
 )
-from .report import StructuredReport, validate_structured_report
+from .report import (
+    StructuredReport,
+    report_from_model_output,
+    validate_model_output,
+    validate_structured_report,
+)
 from .render import render_html
+from .schema import (
+    STRUCTURED_REPORT_SCHEMA_NAME,
+    daily_run_context_json_schema,
+    structured_report_json_schema,
+    structured_report_model_json_schema,
+)
 
 __all__ = [
     "DailyRunContext",
+    "DeepSeekAnalyzer",
+    "DeepSeekConfig",
+    "DeepSeekError",
+    "MissingAPIKeyError",
+    "AnalysisResult",
+    "AnalyzerMetadata",
     "DataMismatchError",
     "DataSourceError",
     "FixtureAnalyzer",
@@ -27,6 +52,12 @@ __all__ = [
     "SchemaValidationError",
     "SourceEvidence",
     "StructuredReport",
+    "report_from_model_output",
+    "validate_model_output",
     "render_html",
     "validate_structured_report",
+    "STRUCTURED_REPORT_SCHEMA_NAME",
+    "daily_run_context_json_schema",
+    "structured_report_json_schema",
+    "structured_report_model_json_schema",
 ]

@@ -61,17 +61,22 @@ def _lap_rows(messages: list[Mapping[str, Any]]) -> tuple[dict[str, Any], ...] |
     for index, lap in enumerate(messages):
         row: dict[str, Any] = {
             "index": index,
-            "durationSec": _first_present(
-                _safe_metric(lap, "total_timer_time"),
-                _safe_metric(lap, "total_elapsed_time"),
-            ),
+            "timerTimeSec": _safe_metric(lap, "total_timer_time"),
+            "elapsedTimeSec": _safe_metric(lap, "total_elapsed_time"),
             "distanceM": _safe_metric(lap, "total_distance"),
             "averageSpeedMps": _safe_metric(lap, "enhanced_avg_speed"),
             "averageHrBpm": _safe_metric(lap, "avg_heart_rate"),
             "maxHrBpm": _safe_metric(lap, "max_heart_rate"),
-            "cadenceSpm": _first_present(
+            "cadenceRawValue": _first_present(
                 _safe_metric(lap, "avg_running_cadence"),
                 _safe_metric(lap, "avg_cadence"),
+            ),
+            "cadenceRawUnit": (
+                "strides/min"
+                if lap.get("avg_running_cadence") is not None
+                else "rpm"
+                if lap.get("avg_cadence") is not None
+                else None
             ),
             "powerW": _safe_metric(lap, "avg_power"),
             "ascentM": _safe_metric(lap, "total_ascent"),
@@ -90,10 +95,8 @@ def _split_rows(messages: list[Mapping[str, Any]]) -> tuple[dict[str, Any], ...]
         rows.append(
             {
                 "index": index,
-                "durationSec": _first_present(
-                    _safe_metric(split, "total_timer_time"),
-                    _safe_metric(split, "total_elapsed_time"),
-                ),
+                "timerTimeSec": _safe_metric(split, "total_timer_time"),
+                "elapsedTimeSec": _safe_metric(split, "total_elapsed_time"),
                 "distanceM": _first_present(
                     _safe_metric(split, "distance"),
                     _safe_metric(split, "total_distance"),
@@ -120,7 +123,7 @@ def _structured_workout(
         normalized_steps.append(
             {
                 "index": index,
-                "durationSec": _safe_metric(step, "duration_time"),
+                "durationTimeSec": _safe_metric(step, "duration_time"),
                 "durationType": step.get("duration_type"),
                 "targetType": step.get("target_type"),
                 "targetSpeedLowMps": _safe_metric(step, "custom_target_speed_low"),
@@ -168,11 +171,9 @@ def context_from_fit_messages(
         timezone_source = "source" if timezone else "unknown"
 
     distance = _safe_metric(session, "total_distance")
-    duration = _first_present(
-        _safe_metric(session, "total_timer_time"),
-        _safe_metric(session, "total_elapsed_time"),
-    )
-    if distance is None or duration is None:
+    timer_time = _safe_metric(session, "total_timer_time")
+    elapsed_time = _safe_metric(session, "total_elapsed_time")
+    if distance is None or (timer_time is None and elapsed_time is None):
         raise DataSourceError("FIT session lacks distance or duration")
     speed = _first_present(
         _safe_metric(session, "enhanced_avg_speed"),
@@ -184,26 +185,44 @@ def context_from_fit_messages(
     workout = _structured_workout(
         messages.get("workout_mesgs") or [], messages.get("workout_step_mesgs") or []
     )
+    raw_cadence = _first_present(
+        _safe_metric(session, "avg_running_cadence"),
+        _safe_metric(session, "avg_cadence"),
+    )
+    raw_cadence_field = (
+        "avg_running_cadence"
+        if session.get("avg_running_cadence") is not None
+        else "avg_cadence"
+        if session.get("avg_cadence") is not None
+        else None
+    )
+    raw_cadence_unit = (
+        "strides/min" if raw_cadence_field == "avg_running_cadence" else "rpm"
+        if raw_cadence_field
+        else None
+    )
     evidence_fields = [
         "runId",
         "localDate",
         "startDatetimeLocal",
         "sport",
         "distanceM",
-        "durationSec",
+        "timerTimeSec",
+        "elapsedTimeSec",
+        "displayDurationSource",
     ]
     for field_name, source_name in (
         ("averageSpeedMps", "enhanced_avg_speed"),
         ("averageHrBpm", "avg_heart_rate"),
         ("maxHrBpm", "max_heart_rate"),
-        ("cadenceSpm", "avg_running_cadence"),
+        ("cadenceRawValue", raw_cadence_field),
         ("powerW", "avg_power"),
         ("ascentM", "total_ascent"),
         ("trainingEffectAerobic", "total_training_effect"),
         ("trainingEffectAnaerobic", "total_anaerobic_training_effect"),
         ("trainingLoadPeak", "training_load_peak"),
     ):
-        if session.get(source_name) is not None:
+        if source_name is not None and session.get(source_name) is not None:
             evidence_fields.append(field_name)
     if workout is not None:
         evidence_fields.append("structuredWorkout")
@@ -225,16 +244,20 @@ def context_from_fit_messages(
         sport=sport.strip().lower(),
         subtype=session.get("sub_sport") if isinstance(session.get("sub_sport"), str) else None,
         distance_m=distance,
-        duration_sec=duration,
-        elapsed_time_sec=_safe_metric(session, "total_elapsed_time"),
+        timer_time_sec=timer_time,
+        elapsed_time_sec=elapsed_time,
+        moving_time_sec=None,
+        display_duration_source="timer_time" if timer_time is not None else "elapsed_time",
         average_speed_mps=speed,
         average_pace_sec_per_km=average_pace,
         average_hr_bpm=_safe_metric(session, "avg_heart_rate"),
         max_hr_bpm=_safe_metric(session, "max_heart_rate"),
-        cadence_spm=_first_present(
-            _safe_metric(session, "avg_running_cadence"),
-            _safe_metric(session, "avg_cadence"),
-        ),
+        cadence_raw_value=raw_cadence,
+        cadence_raw_unit=raw_cadence_unit,
+        cadence_raw_field=raw_cadence_field,
+        cadence_raw_message="session" if raw_cadence is not None else None,
+        cadence_raw_origin="native" if raw_cadence is not None else None,
+        cadence_normalized_spm=None,
         stride_m=stride_mm / 1000 if stride_mm is not None else None,
         power_w=_safe_metric(session, "avg_power"),
         ascent_m=_safe_metric(session, "total_ascent"),

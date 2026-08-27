@@ -43,7 +43,13 @@ Observed message types include `session`, `lap`, `split`, `record`, `activity`,
 `device_info`, `time_in_zone`, and (in the long-workout fixture)
 `workout`/`workout_step`. Observed session fields include distance, elapsed and
 timer duration, speed, average/max heart rate, cadence, step length, power,
-ascent, aerobic/anaerobic training effect, and `training_load_peak`.
+ascent, aerobic/anaerobic training effect, and `training_load_peak`. The FIT
+profile decodes `total_training_effect` and `total_anaerobic_training_effect`
+with a scale of 10 and no display unit; `training_load_peak` has a native scale
+of 65536 and no generic points/TSS/TRIMP unit. These values remain named device
+metrics in the Engine and are never relabeled as another load system. The
+three fixtures use the same native session fields and profile scales; the
+decoded values differ by activity but their field semantics are consistent.
 
 The two non-workout running fixtures contain no `workout` or `workout_step`
 message. Their lap `intensity` label is not treated as proof of a structured
@@ -53,6 +59,18 @@ workout. Missing structure remains `structuredWorkout: null` and
 The current running_page generator does not normalize these FIT-rich fields
 into `data.db` or `activities.json`; Phase 1 reads them only through the
 separate FIT adapter.
+
+## Phase 1.1 semantic freeze
+
+- `timerTimeSec`, `elapsedTimeSec` and `movingTimeSec` are separate. The
+  running_page source supplies moving/elapsed time; selected FIT files supply
+  timer/elapsed time and no reliable moving-time field.
+- `displayDurationSource` selects `moving_time`, then `timer_time`, then
+  `elapsed_time`; the selected value is `displayDurationSec`. No synthetic
+  moving time is calculated.
+- Training effect and training load retain the device/profile field names and
+  decoded values. No points, TSS, TRIMP or EPOC unit is inferred.
+- Planned workout data and inferred training type remain separate concepts.
 
 ## Pages chain facts
 
