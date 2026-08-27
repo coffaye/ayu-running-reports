@@ -55,6 +55,8 @@ description: 连接并检查 COROS MCP，使用内置的 COROS Workout Review �
 5. 判断近期关系时才读取训练负荷、恢复和能力评估；说明这些是设备模型，不是医学结论。
 6. 查询下一训练日或计划上下文；若详情命令不可调用，不编造目标配速、组间恢复或训练步骤，写明以手表同步课表为准。
 
+即使课表详情只返回标题、时长、距离和负荷，也要根据这些已知信息给出简短、非处方性的执行方向（例如有氧跑的进入、均匀完成和收尾重点）；明确标注目标配速等细节未知，不凭空补造精确数字或分段。
+
 日报、周报和月报的具体查询范围见 [references/report-modes.md](references/report-modes.md)。COROS 返回值是设备指标的来源；自行推导的同比、漂移或平均必须标为计算值。
 
 任何情况下都不展示 Plan ID、活动 ID、device ID、坐标、地图、完整路线、精确起终点、FIT 下载链接或其他内部标识。缺失值是未知，不是 0。
@@ -105,6 +107,8 @@ description: 连接并检查 COROS MCP，使用内置的 COROS Workout Review �
 - 月报：`ayu_running_monthly_YYYY-MM.html`
 
 构建或修改页面前读取 [references/design-system.md](references/design-system.md)，实现 PNG 前读取 [references/png-export.md](references/png-export.md)。HTML 的 hero 是动态训练结论；最顶部品牌始终是绿色 `Ayu` + 白色 `Running`，页脚为 `Ayu Running`。
+
+明日课表模块与其他内容使用同一连续单元风格，不为“明日”单独添加外框、渐变、胶囊或其他强调性容器。
 
 PNG 必须由浏览器内的 HTML/JavaScript 代码直接绘制和下载，不使用图像生成模型，不调用系统打印。它是一张固定宽度、至少 A4 高度的纵向执行摘要，不是整页网页截图；内容过多时只增加长度，视觉与当前黑绿报告一致。
 PNG 画布底部不保留页脚：`DATA · COROS MCP · 日期`、`AYU RUNNING`、页脚分隔线及任何其他页脚元素一律不绘制；HTML 页面页脚仍按页面规范保留。
