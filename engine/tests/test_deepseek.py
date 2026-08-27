@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 import json
 import os
 from pathlib import Path
+import tempfile
 import unittest
 
 ENGINE_ROOT = Path(__file__).parents[1]
@@ -150,6 +151,8 @@ class DeepSeekTests(unittest.TestCase):
         self.assertEqual(result.metadata.input_tokens, 100)
         self.assertEqual(result.metadata.output_tokens, 80)
         self.assertEqual(result.metadata.total_tokens, 180)
+        self.assertEqual(result.metadata.http_status, 200)
+        self.assertEqual(result.metadata.response_status, "completed")
 
     def test_missing_key_is_explicit(self):
         analyzer = DeepSeekAnalyzer(self.config(api_key=None), transport=MockTransport([]))
@@ -187,6 +190,36 @@ class DeepSeekTests(unittest.TestCase):
             self.assertEqual(configured.model, "custom-model")
             self.assertEqual(configured.max_output_tokens, 4096)
             self.assertEqual(configured.timeout_seconds, 12)
+        finally:
+            for name, value in old.items():
+                if value is None:
+                    os.environ.pop(name, None)
+                else:
+                    os.environ[name] = value
+
+    def test_local_env_file_is_opt_in_and_shell_wins(self):
+        names = ("DEEPSEEK_API_KEY", "DEEPSEEK_MODEL", "DEEPSEEK_REASONING_EFFORT")
+        old = {name: os.environ.get(name) for name in names}
+        try:
+            for name in names:
+                os.environ.pop(name, None)
+            with tempfile.TemporaryDirectory() as directory:
+                env_file = Path(directory) / ".env.local"
+                env_file.write_text(
+                    "DEEPSEEK_API_KEY=file-secret\nDEEPSEEK_MODEL=file-model\nDEEPSEEK_REASONING_EFFORT=low\n",
+                    encoding="utf-8",
+                )
+                loaded = DeepSeekConfig.from_env(load_local_files=True, env_file=env_file)
+                self.assertEqual(loaded.model, "file-model")
+                self.assertEqual(loaded.reasoning_effort, "low")
+                self.assertEqual(loaded.api_key, "file-secret")
+                os.environ["DEEPSEEK_MODEL"] = "shell-model"
+                self.assertEqual(
+                    DeepSeekConfig.from_env(load_local_files=True, env_file=env_file).model,
+                    "shell-model",
+                )
+                # The default mode must not read a dotenv file.
+                self.assertIsNone(DeepSeekConfig.from_env().api_key)
         finally:
             for name, value in old.items():
                 if value is None:

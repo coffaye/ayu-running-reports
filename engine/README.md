@@ -33,3 +33,11 @@ generic points/TSS/TRIMP interpretation. Raw FIT files and production routes
 are deliberately not stored in this repository. Missing values remain `null`;
 in particular, missing structured workout data is represented by
 `structuredWorkout: null` and `workoutIntent: "unknown"`.
+
+Phase 2.1 live verification is opt-in and local only. Set the key in the shell
+or a gitignored `.env.local`/`.env`, run `python -m ayu_report_engine.smoke
+--live`, then `python -m ayu_report_engine.benchmark --live`. The latter first
+repeats the one-request smoke gate, then runs A/B/C at low and high effort,
+renders six deterministic HTML reports under `engine/.benchmark/reports/`,
+and stores only safe metadata, semantic report snapshots, validation flags and
+cost estimates. It does not save reasoning or provider raw responses.

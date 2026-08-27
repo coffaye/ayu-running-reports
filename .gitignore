@@ -5,3 +5,6 @@ Thumbs.db
 __pycache__/
 *.py[cod]
 .pytest_cache/
+.env
+.env.local
+engine/.benchmark/

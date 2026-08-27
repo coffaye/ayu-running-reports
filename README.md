@@ -33,8 +33,12 @@ $env:DEEPSEEK_API_KEY = "..."
 python -m ayu_report_engine --run-id 1900000000000 --json tests/fixtures/activities.json --output report.html --analyzer deepseek
 ```
 
-真实 low/high 对比使用 `python -m ayu_report_engine.benchmark --live`，仅在用户明确
-执行且配置 key 后运行；benchmark 不保存 reasoning，只写安全 metadata 和待人工评分的 rubric。
+真实验证先运行一次最小 smoke：
+`python -m ayu_report_engine.smoke --live`，再运行
+`python -m ayu_report_engine.benchmark --live` 做 A/B/C × low/high。仅在用户明确
+执行且配置 key 后运行；live 结果写入 gitignored `engine/.benchmark/`，包含安全
+metadata、验证标记、语义报告快照、确定性 HTML 和保守成本估算，不保存 reasoning、
+Authorization 或 provider raw response。普通 pytest 始终离线。
 
 ## 使用
 

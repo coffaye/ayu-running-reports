@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 import json
 import math
 import os
+from pathlib import Path
 import socket
 import time
 from typing import Any, Callable, Mapping, Protocol
@@ -27,6 +28,17 @@ DEFAULT_MAX_OUTPUT_TOKENS = 8192
 DEFAULT_TIMEOUT_SECONDS = 60.0
 MAX_RETRIES = 1
 ALLOWED_REASONING_EFFORTS = frozenset({"none", "minimal", "low", "medium", "high", "xhigh", "max"})
+ENV_FILE_NAMES = (".env.local", ".env")
+ENV_FILE_KEYS = frozenset(
+    {
+        "DEEPSEEK_API_KEY",
+        "DEEPSEEK_BASE_URL",
+        "DEEPSEEK_MODEL",
+        "DEEPSEEK_REASONING_EFFORT",
+        "DEEPSEEK_MAX_OUTPUT_TOKENS",
+        "DEEPSEEK_TIMEOUT_SECONDS",
+    }
+)
 
 
 class DeepSeekError(EngineError):
@@ -91,9 +103,20 @@ class DeepSeekConfig:
             raise ValueError("timeout_seconds must be positive")
 
     @classmethod
-    def from_env(cls) -> "DeepSeekConfig":
+    def from_env(
+        cls,
+        *,
+        load_local_files: bool = False,
+        env_file: str | os.PathLike[str] | None = None,
+    ) -> "DeepSeekConfig":
+        local = _local_env_values(env_file=env_file) if load_local_files else {}
+
+        def setting(name: str, default: str) -> str:
+            value = os.getenv(name)
+            return value if value is not None else local.get(name, default)
+
         def positive_int(name: str, default: int) -> int:
-            raw = os.getenv(name, str(default)).strip()
+            raw = setting(name, str(default)).strip()
             try:
                 value = int(raw)
             except ValueError as exc:
@@ -103,7 +126,7 @@ class DeepSeekConfig:
             return value
 
         def positive_float(name: str, default: float) -> float:
-            raw = os.getenv(name, str(default)).strip()
+            raw = setting(name, str(default)).strip()
             try:
                 value = float(raw)
             except ValueError as exc:
@@ -113,12 +136,10 @@ class DeepSeekConfig:
             return value
 
         return cls(
-            api_key=os.getenv("DEEPSEEK_API_KEY") or None,
-            base_url=os.getenv("DEEPSEEK_BASE_URL", DEFAULT_BASE_URL).strip() or DEFAULT_BASE_URL,
-            model=os.getenv("DEEPSEEK_MODEL", DEFAULT_MODEL).strip() or DEFAULT_MODEL,
-            reasoning_effort=os.getenv(
-                "DEEPSEEK_REASONING_EFFORT", DEFAULT_REASONING_EFFORT
-            ).strip(),
+            api_key=setting("DEEPSEEK_API_KEY", "").strip() or None,
+            base_url=setting("DEEPSEEK_BASE_URL", DEFAULT_BASE_URL).strip() or DEFAULT_BASE_URL,
+            model=setting("DEEPSEEK_MODEL", DEFAULT_MODEL).strip() or DEFAULT_MODEL,
+            reasoning_effort=setting("DEEPSEEK_REASONING_EFFORT", DEFAULT_REASONING_EFFORT).strip(),
             max_output_tokens=positive_int("DEEPSEEK_MAX_OUTPUT_TOKENS", DEFAULT_MAX_OUTPUT_TOKENS),
             timeout_seconds=positive_float("DEEPSEEK_TIMEOUT_SECONDS", DEFAULT_TIMEOUT_SECONDS),
         )
@@ -170,6 +191,8 @@ class AnalyzerMetadata:
     total_tokens: int | None
     reasoning_effort: str
     retry_count: int
+    http_status: int | None = None
+    response_status: str | None = None
     analyzer_version: str = ENGINE_VERSION
 
     def to_dict(self) -> dict[str, Any]:
@@ -185,6 +208,8 @@ class AnalyzerMetadata:
             "totalTokens": self.total_tokens,
             "reasoningEffort": self.reasoning_effort,
             "retryCount": self.retry_count,
+            "httpStatus": self.http_status,
+            "responseStatus": self.response_status,
             "analyzerVersion": self.analyzer_version,
         }
 
@@ -302,6 +327,44 @@ def _usage(body: Mapping[str, Any], key: str) -> int | None:
     return int(value) if isinstance(value, int) and not isinstance(value, bool) else None
 
 
+def _read_env_file(path: Path) -> dict[str, str]:
+    """Read only known DeepSeek settings from a local dotenv-style file."""
+
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return {}
+    values: dict[str, str] = {}
+    for line in lines:
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        if stripped.startswith("export "):
+            stripped = stripped[7:].lstrip()
+        if "=" not in stripped:
+            continue
+        name, value = stripped.split("=", 1)
+        name = name.strip()
+        if name not in ENV_FILE_KEYS:
+            continue
+        value = value.strip()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in {"'", '"'}:
+            value = value[1:-1]
+        values[name] = value
+    return values
+
+
+def _local_env_values(*, env_file: str | os.PathLike[str] | None = None) -> dict[str, str]:
+    if env_file is not None:
+        return _read_env_file(Path(env_file))
+    for directory in (Path.cwd(), *Path.cwd().parents):
+        for name in ENV_FILE_NAMES:
+            values = _read_env_file(directory / name)
+            if values:
+                return values
+    return {}
+
+
 class DeepSeekAnalyzer:
     """Explicit, non-default analyzer for DeepSeek Responses API calls."""
 
@@ -317,6 +380,12 @@ class DeepSeekAnalyzer:
         self._transport = transport or _default_transport
         self._sleep = sleep
         self._clock = clock
+
+    @property
+    def endpoint(self) -> str:
+        """The request URL, safe to report because it never contains a key."""
+
+        return self.config.base_url.rstrip("/") + "/responses"
 
     def _payload(self, context: DailyRunContext) -> dict[str, Any]:
         return {
@@ -340,7 +409,7 @@ class DeepSeekAnalyzer:
     def analyze_with_metadata(self, context: DailyRunContext) -> AnalysisResult:
         if not self.config.api_key:
             raise MissingAPIKeyError()
-        url = self.config.base_url.rstrip("/") + "/responses"
+        url = self.endpoint
         headers = {
             "Authorization": f"Bearer {self.config.api_key}",
             "Content-Type": "application/json",
@@ -426,6 +495,8 @@ class DeepSeekAnalyzer:
                     total_tokens=_usage(response.body, "total_tokens"),
                     reasoning_effort=self.config.reasoning_effort,
                     retry_count=retry_count,
+                    http_status=response.status_code,
+                    response_status=status,
                 )
                 return AnalysisResult(report=report, metadata=metadata)
             except DeepSeekError as exc:

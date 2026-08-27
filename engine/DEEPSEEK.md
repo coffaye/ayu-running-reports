@@ -2,7 +2,7 @@
 
 `DeepSeekAnalyzer` is never selected implicitly. The regular fixture CLI and
 all tests remain offline. A real request requires `DEEPSEEK_API_KEY` and the
-explicit `--analyzer deepseek` flag (or the explicit benchmark module).
+explicit `--analyzer deepseek` flag (or an explicit `--live` module).
 
 ## Configuration
 
@@ -15,6 +15,11 @@ Environment variables are centralized in `DeepSeekConfig.from_env()`:
   `medium`, `high`, `xhigh`, `max`)
 - `DEEPSEEK_MAX_OUTPUT_TOKENS` (default `8192`)
 - `DEEPSEEK_TIMEOUT_SECONDS` (default `60`)
+
+For local development, keep the key in the shell environment (preferred), or
+in a gitignored `.env.local`/`.env` at the working directory. Dotenv files are
+read only by explicit live commands; shell variables win, and only the six
+`DEEPSEEK_*` settings are parsed. The key is never printed or serialized.
 
 The request is `POST {base_url}/responses` with `instructions`, a JSON string
 projection of `DailyRunContext`, `reasoning: {"effort": ...}`, and
@@ -43,13 +48,33 @@ content filtering, schema failures and semantic failures are terminal. Usage
 and latency metadata are returned separately; reasoning text is ignored and
 never persisted.
 
-## Explicit benchmark
+## Explicit smoke test and benchmark
+
+Run one minimal request before spending tokens on the six-case comparison:
 
 ```text
-python -m ayu_report_engine.benchmark --live --output deepseek-benchmark.json
+python -m ayu_report_engine.smoke --live
+```
+
+The smoke result records only endpoint, model, response status, latency,
+token usage and validation. It does not persist reasoning or provider bodies.
+
+```text
+python -m ayu_report_engine.benchmark --live
 ```
 
 The benchmark runs sanitized cases A (basic run), B (structured long workout)
-and C (missing metrics) at both low and high effort. It records safe latency,
-token counts, validation status and empty rubric slots for human scoring; it
-does not save reasoning. Without a key it exits without making a request.
+and C (missing metrics) at both low and high effort, after the smoke passes. It
+writes the ignored `engine/.benchmark/` directory with safe metadata, schema
+and semantic validation, deterministic HTML for each result, a semantic report
+snapshot, a conservative mechanical pre-score and cache-hit/miss cost
+estimates. It never saves reasoning, authorization headers or provider raw
+responses. Without a key it exits without making a request.
+
+The cost estimate uses the current DeepSeek V4 Flash list prices and assumes
+cache-miss input for the conservative figure; confirm prices before budgeting:
+<https://api-docs.deepseek.com/quick_start/pricing/>.
+
+`quality` is only a deterministic pre-score for review triage. Final low/high
+selection must inspect the actual report content against the Phase 2.1 rubric;
+the Engine never silently chooses an effort.

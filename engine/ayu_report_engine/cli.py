@@ -40,7 +40,9 @@ def main(argv: list[str] | None = None) -> int:
     else:
         raise SystemExit("one of --json or --fit is required")
     if args.analyzer == "deepseek":
-        config = DeepSeekConfig.from_env()
+        # A local dotenv file is consulted only after explicit analyzer choice;
+        # fixture mode and normal imports remain entirely offline.
+        config = DeepSeekConfig.from_env(load_local_files=True)
         if args.reasoning_effort:
             config = DeepSeekConfig(
                 api_key=config.api_key,

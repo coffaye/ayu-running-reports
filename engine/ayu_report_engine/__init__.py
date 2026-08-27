@@ -1,9 +1,9 @@
 """Ayu Running's shared report-engine boundary.
 
-The package intentionally contains no network client and never calls DeepSeek.
-It normalizes local files, validates semantic report data, and renders a
-deterministic report.  A future analyzer can implement ``ReportAnalyzer``
-without changing the renderer or the Codex Skill contract.
+The package keeps network access opt-in: importing it, using fixture analysis,
+or running ordinary tests never calls DeepSeek.  The explicit
+``DeepSeekAnalyzer`` path normalizes local files, validates semantic report
+data, and renders a deterministic report without exposing provider payloads.
 """
 
 from .analysis import FixtureAnalyzer, ReportAnalyzer
