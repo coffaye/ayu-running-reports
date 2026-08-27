@@ -9,6 +9,8 @@ Use this visual system for every daily, weekly, and monthly report.
 - The hero title is the report's dynamic conclusion, not the product name.
 - Footer right label: `Ayu Running`.
 - PNG export exception: the exported PNG omits the HTML footer entirely, including the source/date line, footer divider, and `Ayu Running` footer label; keep only the report body and a clean bottom margin.
+- Score treatment: render the score value in white and the maximum denominator as a smaller green value; bind both from the report data.
+- Status treatment: use a small green dot followed by the bound completion status and training type, with spaces and no middle-dot separator.
 - Primary green: `#56FFA3`.
 - Page background: `#080B09`; soft background: `#0D120F`.
 - Primary text: `#F2F6F3`; secondary text around 70% opacity; metadata around 42% opacity.
@@ -24,6 +26,7 @@ Follow the DeepSeek Harness-inspired visual language without copying its content
 - Do not add drop shadows to content modules.
 - Use pill shapes only for the fixed navigation and the `下载 PNG` button. Completion status and `Optimized` must be plain inline text, not pills.
 - Use monospace typography for metrics and small technical labels; use a clean Chinese system sans-serif for narrative text.
+- Use spaces rather than slashes in PNG section labels, for example `TODAY 今日结论`, `LOAD 近期负荷`, and `TOMORROW 明日课表`.
 
 ## Required page structure
 

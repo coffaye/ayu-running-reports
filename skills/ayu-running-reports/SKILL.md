@@ -109,6 +109,7 @@ description: 连接并检查 COROS MCP，使用内置的 COROS Workout Review �
 构建或修改页面前读取 [references/design-system.md](references/design-system.md)，实现 PNG 前读取 [references/png-export.md](references/png-export.md)。HTML 的 hero 是动态训练结论；最顶部品牌始终是绿色 `Ayu` + 白色 `Running`，页脚为 `Ayu Running`。
 
 明日课表模块与其他内容使用同一连续单元风格，不为“明日”单独添加外框、渐变、胶囊或其他强调性容器。
+完成质量、训练类型、负荷比和负荷状态等状态字段必须绑定本次 COROS/课表数据；示例值只能作为数据，不得把状态文字硬编码进 UI。
 
 PNG 必须由浏览器内的 HTML/JavaScript 代码直接绘制和下载，不使用图像生成模型，不调用系统打印。它是一张固定宽度、至少 A4 高度的纵向执行摘要，不是整页网页截图；内容过多时只增加长度，视觉与当前黑绿报告一致。
 PNG 画布底部不保留页脚：`DATA · COROS MCP · 日期`、`AYU RUNNING`、页脚分隔线及任何其他页脚元素一律不绘制；HTML 页面页脚仍按页面规范保留。
