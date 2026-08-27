@@ -8,7 +8,7 @@ Use this visual system for every daily, weekly, and monthly report.
 - Top fixed brand: `Ayu` in green and `Running` in white, preceded by a small green status dot.
 - The hero title is the report's dynamic conclusion, not the product name.
 - Footer right label: `Ayu Running`.
-- PNG export exception: the exported PNG omits the HTML footer content entirely, including the source/date line and `Ayu Running` footer label; a single footer-free horizontal rule matching the top divider may close the report above a clean bottom margin.
+- PNG export exception: the exported PNG omits the HTML footer content entirely, including the source/date line and `Ayu Running` footer label; a single footer-free horizontal rule matching the top divider may close the report immediately below the measured final content, followed by a clean bottom margin.
 - Score treatment: render the score value in white and the maximum denominator as a smaller green value; bind both from the report data.
 - Status treatment: use a small green dot followed by the bound completion status, a `·` separator, and the bound training type; never hardcode example status values.
 - Load treatment: keep short-term load, long-term load, and load ratio visually identical; put the bound load status in a separate green-dot/green-text item. Show the recovery estimate as a separate green-dot line with only the time estimate.

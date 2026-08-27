@@ -15,7 +15,7 @@ Every report HTML must include a working button labeled `下载 PNG`. Do not use
 - Draw at logical A4 coordinates and scale the canvas context to the output resolution so spacing remains deterministic.
 - Use installed Chinese system fonts such as `Microsoft YaHei`, `PingFang SC`, and sans-serif fallbacks. Await `document.fonts.ready` before drawing.
 - Wrap text by measured width, reserve line height explicitly, and lay sections out in vertical flow. Preflight the wrapped line counts before creating the canvas, then push later sections down and grow the height as needed.
-- The exported PNG has no footer content at all: do not draw the HTML footer, source/date line such as `DATA · COROS MCP · ...`, `AYU RUNNING`, or any footer label. A single footer-free horizontal rule matching the top divider is allowed; a blank lower margin is also acceptable.
+- The exported PNG has no footer content at all: do not draw the HTML footer, source/date line such as `DATA · COROS MCP · ...`, `AYU RUNNING`, or any footer label. A single footer-free horizontal rule matching the top divider may be drawn immediately below the final content block, based on its measured bottom, followed by a blank lower margin; never anchor this rule to the fixed canvas bottom.
 - Export with `canvas.toBlob(..., 'image/png')`, create a temporary object URL, trigger a download, then revoke the URL.
 - Name downloads consistently, for example `Ayu_Running_2026-08-26.png`.
 
@@ -24,5 +24,5 @@ Every report HTML must include a working button labeled `下载 PNG`. Do not use
 1. Trigger the button in a real browser and confirm a `.png` download event.
 2. Inspect dimensions with an image library and confirm the width is `2480 px` and the height is at least `3508 px`; long-content fixtures must increase height while keeping width unchanged.
 3. Open the original-size PNG and visually inspect the full image and key cropped regions.
-4. Confirm the bottom margin is clean and contains no footer text, source/date label, or brand label; a single footer-free rule matching the top divider is allowed immediately above it.
+4. Confirm the bottom margin is clean and contains no footer text, source/date label, or brand label; if a footer-free rule is present, confirm it sits immediately below the measured final content rather than at the fixed canvas bottom.
 5. Fix clipped text, lone punctuation, low contrast, malformed Chinese glyphs, or content extending below the dynamically calculated bottom margin.
