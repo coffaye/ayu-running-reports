@@ -11,6 +11,7 @@ Use this visual system for every daily, weekly, and monthly report.
 - PNG export exception: the exported PNG omits the HTML footer entirely, including the source/date line, footer divider, and `Ayu Running` footer label; keep only the report body and a clean bottom margin.
 - Score treatment: render the score value in white and the maximum denominator as a smaller green value; bind both from the report data.
 - Status treatment: use a small green dot followed by the bound completion status and training type, with spaces and no middle-dot separator.
+- Load treatment: keep short-term load, long-term load, and load ratio visually identical; put the bound load status in a separate green-dot/green-text item. Show the recovery estimate as a separate green-dot line with only the time estimate.
 - Primary green: `#56FFA3`.
 - Page background: `#080B09`; soft background: `#0D120F`.
 - Primary text: `#F2F6F3`; secondary text around 70% opacity; metadata around 42% opacity.
