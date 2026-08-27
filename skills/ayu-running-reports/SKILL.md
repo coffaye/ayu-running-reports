@@ -9,6 +9,17 @@ description: 连接并检查 COROS MCP，使用内置的 COROS Workout Review �
 
 本 Skill 融合了 `coros-workout-review` 与其内置的 ShadowRunner 决策框架，并叠加 Ayu Running 的周期报告、UI 和 PNG 规范。来源与许可见 [NOTICE.md](NOTICE.md)。
 
+## 共享 Report Engine
+
+仓库根目录的 `engine/` 是 Skill、CLI 与未来 GitHub Actions 共用的离线核心。它定义
+`DailyRunContext`、`StructuredReport`、running_page/SQLite/FIT adapters 和确定性 HTML/
+Canvas PNG renderer；本 Skill 不另复制一套分析规则或模板。Engine 当前只提供
+`FixtureAnalyzer`，不调用 DeepSeek，也不读取实时 COROS。
+
+Engine 输入必须保留来源、版本和时区语义：running_page 的无时区 local datetime 使用
+`timezone: null` 与 `timezoneSource: "unknown"`；结构化课表缺失使用
+`structuredWorkout: null` 与 `workoutIntent: "unknown"`，不得改称自由跑或由模型补造。
+
 ## 入口与模式
 
 先识别用户要做什么：

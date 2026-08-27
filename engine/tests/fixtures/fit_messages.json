@@ -1,0 +1,49 @@
+{
+  "session_mesgs": [
+    {
+      "start_time": "2030-03-04T22:00:00+00:00",
+      "sport": "running",
+      "sub_sport": "generic",
+      "total_distance": 10000.0,
+      "total_elapsed_time": 3600.0,
+      "total_timer_time": 3595.0,
+      "enhanced_avg_speed": 2.78,
+      "avg_heart_rate": 145,
+      "max_heart_rate": 164,
+      "avg_running_cadence": 88,
+      "avg_step_length": 950,
+      "avg_power": 240,
+      "total_ascent": 0,
+      "total_training_effect": 3.2,
+      "total_anaerobic_training_effect": 0.1,
+      "training_load_peak": 120.0
+    }
+  ],
+  "lap_mesgs": [
+    {
+      "total_timer_time": 3595.0,
+      "total_distance": 10000.0,
+      "enhanced_avg_speed": 2.78,
+      "avg_heart_rate": 145,
+      "avg_running_cadence": 88,
+      "avg_power": 240,
+      "total_ascent": 0,
+      "intensity": "active",
+      "lap_trigger": "session_end"
+    }
+  ],
+  "split_mesgs": [],
+  "workout_mesgs": [
+    {"wkt_name": "匿名结构化课表", "wkt_description": "fixture"}
+  ],
+  "workout_step_mesgs": [
+    {
+      "duration_time": 1800.0,
+      "duration_type": "time",
+      "target_type": "speed",
+      "custom_target_speed_low": 2.6,
+      "custom_target_speed_high": 3.0,
+      "intensity": "interval"
+    }
+  ]
+}

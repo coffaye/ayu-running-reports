@@ -1,0 +1,32 @@
+[
+  {
+    "run_id": 1900000000000,
+    "name": "",
+    "distance": 5000.0,
+    "moving_time": "0:30:00",
+    "type": "Run",
+    "subtype": "generic",
+    "start_date": "2030-03-04 22:00:00",
+    "start_date_local": "2030-03-05 06:00:00",
+    "location_country": "",
+    "summary_polyline": null,
+    "average_heartrate": null,
+    "average_speed": 2.777777,
+    "elevation_gain": 0.0
+  },
+  {
+    "run_id": 1900003600000,
+    "name": "",
+    "distance": 8000.0,
+    "moving_time": "0:48:00",
+    "type": "Run",
+    "subtype": "generic",
+    "start_date": "2030-03-04 23:30:00",
+    "start_date_local": "2030-03-05 07:30:00",
+    "location_country": "",
+    "summary_polyline": null,
+    "average_heartrate": 150.0,
+    "average_speed": 2.777777,
+    "elevation_gain": null
+  }
+]

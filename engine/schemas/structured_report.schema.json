@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ayu-running.example/schemas/structured-report-1.0.json",
+  "title": "Ayu StructuredReport",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "runId", "reportDate", "verdict", "trainingPurpose",
+    "completion", "evidence", "physiologyCost", "load", "recovery",
+    "shadowRunner", "bottleneck", "applicableDomain", "marginalGain",
+    "minimalReversibleNextStep", "nextTrainingSuggestion", "uncertainty"
+  ],
+  "properties": {
+    "schemaVersion": {"type": "string", "const": "1.0"},
+    "engineVersion": {"type": "string"},
+    "engineCommit": {"type": ["string", "null"]},
+    "promptVersion": {"type": "string"},
+    "rendererVersion": {"type": "string"},
+    "runId": {"type": "string", "pattern": "^[1-9][0-9]*$"},
+    "reportDate": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"},
+    "verdict": {"type": "string", "minLength": 1},
+    "trainingPurpose": {"type": ["string", "null"]},
+    "completion": {
+      "type": "object",
+      "required": ["status", "trainingType", "score"],
+      "properties": {
+        "status": {"type": ["string", "null"]},
+        "trainingType": {"type": ["string", "null"]},
+        "score": {"type": ["number", "null"], "minimum": 0, "maximum": 10}
+      },
+      "additionalProperties": true
+    },
+    "evidence": {"type": "array", "items": {"type": "object"}},
+    "physiologyCost": {"type": ["string", "null"]},
+    "load": {"type": ["object", "null"]},
+    "recovery": {"type": ["object", "null"]},
+    "shadowRunner": {"type": "object"},
+    "bottleneck": {"type": ["string", "null"]},
+    "applicableDomain": {"type": ["string", "null"]},
+    "marginalGain": {"type": ["string", "null"]},
+    "minimalReversibleNextStep": {"type": ["string", "null"]},
+    "nextTrainingSuggestion": {"type": ["string", "null"]},
+    "uncertainty": {"type": "array", "items": {"type": "string"}}
+  }
+}

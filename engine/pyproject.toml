@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ayu-running-report-engine"
+version = "0.1.0"
+description = "Deterministic Ayu Running report context, schema, analysis boundary, and HTML/Canvas renderer."
+requires-python = ">=3.11"
+dependencies = [
+  "garmin-fit-sdk>=21.171.0",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=8"]
+
+[tool.setuptools]
+package-dir = {"" = "."}
+packages = ["ayu_report_engine", "ayu_report_engine.adapters"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
