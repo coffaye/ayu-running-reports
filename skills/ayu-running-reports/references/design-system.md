@@ -45,7 +45,7 @@ Follow the DeepSeek Harness-inspired visual language without copying its content
 
 ## Interaction and responsive behavior
 
-- Navigation anchors must update their active state on scroll.
+- Navigation anchors must have a visible green active state. Initialize `总览` as active, switch the active item as its section crosses the reading position during scrolling, update immediately on tab clicks, and force the final item active at the document bottom. Keep `aria-current` synchronized with the visual state.
 - Desktop uses wide asymmetric grids. Under 800 px, collapse to a single column without horizontal overflow.
 - Keep charts as inline SVG so the report remains standalone.
 - Do not use external runtime dependencies for the report or PNG generation.
