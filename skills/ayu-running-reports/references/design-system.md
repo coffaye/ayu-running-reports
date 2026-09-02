@@ -24,7 +24,7 @@ Follow the DeepSeek Harness-inspired visual language without copying its content
 - Use a narrow centered content container, large vertical whitespace, oversized conclusion typography, thin low-contrast dividers, a faint 90 px grid, and subtle green radial atmosphere.
 - Organize most content as continuous full-width sections. Do not create a wall of bordered cards.
 - Render the upcoming-plan module as the same continuous full-width section language as the other modules; do not give it a unique enclosing frame, gradient, border, or pill solely to mark it as upcoming.
-- Show the upcoming workout name once, in green. Do not repeat the same workout name in a separate white heading in either HTML or the Canvas PNG.
+- Retain the white heading `明日课表：`, then show the upcoming workout name once in green. Do not append or repeat the workout name inside the white heading in either HTML or the Canvas PNG.
 - Reserve rounded tinted surfaces for one or two genuinely important modules such as interval evidence or the upcoming plan.
 - Do not add drop shadows to content modules.
 - Use pill shapes only for the fixed navigation and the `下载 PNG` button. Completion status and `Optimized` must be plain inline text, not pills.
