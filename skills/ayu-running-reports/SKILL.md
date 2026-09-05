@@ -17,10 +17,16 @@ time，并保留 FIT cadence 的 raw value/unit/provenance；除非已有独立�
 
 ## 共享 Report Engine
 
-仓库根目录的 `engine/` 是 Skill、CLI 与未来 GitHub Actions 共用的离线核心。它定义
+仓库根目录的 `engine/` 是本仓库 standalone/manual Skill 与 CLI 使用的可离线核心。它定义
 `DailyRunContext`、`StructuredReport`、running_page/SQLite/FIT adapters 和确定性 HTML/
-Canvas PNG renderer；本 Skill 不另复制一套分析规则或模板。Engine 当前只提供
-`FixtureAnalyzer`，不调用 DeepSeek，也不读取实时 COROS。
+Canvas PNG renderer；本 Skill 不另复制一套分析规则或模板。Engine 同时提供
+`FixtureAnalyzer` 与显式 `DeepSeekAnalyzer`。默认 fixture 模式、普通导入和测试不联网；
+只有明确选择 DeepSeekAnalyzer（CLI 使用 `--analyzer deepseek`）并提供
+`DEEPSEEK_API_KEY` 时才调用 DeepSeek。此 standalone Engine 不读取实时 COROS。
+
+本仓库 standalone/reference Engine 与 `ayu-running-hub/engine` 独立版本化，版本可能
+不同；当前 Production runtime 以 Hub Engine 为准。修改本 Skill 文档不会更新 Hub 的
+受控 Skill snapshot，Production 仍使用 Hub 中的 `engine/skill_contract/skill-lock.json`。
 
 Engine 输入必须保留来源、版本和时区语义：running_page 的无时区 local datetime 使用
 `timezone: null` 与 `timezoneSource: "unknown"`；结构化课表缺失使用
